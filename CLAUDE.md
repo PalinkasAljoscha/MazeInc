@@ -2,9 +2,7 @@
 
 ## Current Focus
 
-Building animated math games as a webapp. No framework or app shell yet —
-just standalone games that run in the browser. The goal is to learn what works
-visually and technically before designing any broader structure.
+Game 1 (Multiples Catcher) is built and working. Next: play-test, refine, then build game 2.
 
 ## Target Audience
 
@@ -27,64 +25,65 @@ React wraps it as a component and handles everything outside the game canvas.
 
 ---
 
-## Game Design Principles
+## Project Structure
 
-- **Child-friendly** — large targets, clear readable fonts, bright but not overwhelming colors
-- **Immediate feedback** — clear visual/animated effect on gaining or losing points
-- **Mobile and tablet ready** — design for touch input from the start
-- **Stateless** — no results stored; each session starts fresh
-
----
-
-## Planned Games
-
-### 1. Multiples Catcher (Tetris-style)
-game optic and flow is tetris like:
-on the bottom line there are 4 - 8 small integers as slots. The slots fill the whole bottom line.
-From the top some balls with numbers on them fall down, one at a time.
-the player can move the ball left or right (arrow keys) and let it drop (space) or just get to the bottom. once the ball arrives at 
-bottom it will always end up in one of the slots. 
-If the number on the ball is a multiple of the number of the slot in fell into, player gets a point. 
-Game ends after 1 minute and final points are shown then. 
-
-### 2. TBD
-To be defined after the first game is built and tested.
+```
+src/
+  App.jsx                          # Home page + game routing (add new games to GAMES array here)
+  games/
+    MultiplesCatcher/
+      index.jsx                    # React wrapper + on-screen touch buttons
+      GameScene.js                 # Phaser scene — all game logic
+```
 
 ---
 
 ## Phaser + React Integration Pattern
 
-Each game is a React component that initialises a Phaser game instance on mount
-and destroys it on unmount. The React component receives a `difficulty` prop and
-calls an `onComplete` callback when the game ends — this keeps the door open for
-a future framework layer without requiring one now.
+- React wrapper creates `Phaser.Game` on mount (scale mode `FIT`, internal res 480×680), destroys on unmount.
+- Scene emits `sceneReady` → React stores scene ref to forward touch-button calls.
+- Scene emits `gameComplete` → React calls `onComplete({ correct, score })`.
+- Touch buttons call `scene.moveBall(dir)` / `scene.dropBall()` directly.
+- Game logic lives entirely inside Phaser scenes — not in React state.
 
+Each game exports:
 ```jsx
-// src/games/NumberCatcher/index.jsx
-export default function NumberCatcher({ difficulty = 1, onComplete }) {
-  // mounts Phaser into a <div ref> on load
-  // calls onComplete({ correct: bool, timeMs: number }) when game ends
-}
+export default function GameComponent({ difficulty = 1, onComplete }) { ... }
+export const meta = { id, title, topics, minAge, maxAge }
 ```
-
-Game logic lives entirely inside Phaser scenes — not in React state.
 
 ---
 
-## Feedback Effects (Phaser)
+## Game 1 — Multiples Catcher (built ✓)
 
-Both games should include simple effects for outcomes:
-- **Correct** — green flash, particle burst, cheerful sound (optional)
-- **Wrong** — red shake, brief slow-down or penalty
+6 coloured slots at the bottom (`[2, 3, 4, 5, 6, 7]`). Balls fall one at a time; player steers with ← → (keyboard or touch) and drops with Space / ↓ button. A ball scores if its number is a multiple of the slot it lands in.
 
-Keep effects short (under 1 second) so they don't interrupt the game flow.
+**Ball generation** (`GameScene.js` constants):
+- `MIN_BALL_NUMBER = 9`, `MAX_BALL_NUMBER = 50` — range of values on balls
+- `BALLS_PER_SLOT = 2` — bag cycle size; every `NUM_SLOTS × BALLS_PER_SLOT` (12) balls, each slot gets exactly 2 multiples
+- No consecutive repeat: previous ball's value is excluded from the next draw
+
+**Feedback:**
+- Correct → green burst, floating equation, particle dots
+- Wrong → red flash, camera shake
+
+**Timer:** 60 seconds; game-over overlay shows score with Play Again button.
+
+---
+
+## Game Design Principles
+
+- **Child-friendly** — large targets, clear fonts, bright but not overwhelming colors
+- **Immediate feedback** — clear visual/animated effect on correct/wrong
+- **Mobile and tablet ready** — touch controls on every game
+- **Stateless** — no results stored; each session starts fresh
 
 ---
 
 ## Notes / Open Decisions
 
-- Exact mechanic for game 1 to be refined during build
-- Whether to add sound effects (needs user gesture on mobile to unlock audio)
-- Framework / app shell to be designed after games 1–2 are complete
+- Sound effects deferred (needs user gesture on mobile to unlock audio)
+- Game 2 to be defined after play-testing game 1
+- Difficulty progression not yet designed
 
 *Update this file at the end of each session with decisions made.*
