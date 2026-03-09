@@ -13,6 +13,7 @@ const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
 const MAX_BALL_NUMBER = 50                 // upper bound for numbers on balls
+const MIN_BALL_NUMBER = 50                 // lower bound for numbers on balls
 const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle (cycle length = NUM_SLOTS × BALLS_PER_SLOT)
 
 // Bright distinct colours for each slot
@@ -21,12 +22,12 @@ const SLOT_COLORS_CSS = ['#e74c3c', '#e67e22', '#f39c12', '#27ae60', '#2980b9', 
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-// Returns a random multiple of `divisor` that is ≤ MAX_BALL_NUMBER and ≠ exclude.
+// Returns a random multiple m of `divisor` such that MIN_BALL_NUMBER ≤ M ≤ MAX_BALL_NUMBER and ≠ exclude.
 function multipleOf(divisor, exclude) {
   const candidates = []
   for (let m = 1; m * divisor <= MAX_BALL_NUMBER; m++) {
     const val = m * divisor
-    if (val !== exclude) candidates.push(val)
+    if (val !== exclude && val >= MIN_BALL_NUMBER) candidates.push(val)
   }
   // Fallback: if divisor itself exceeds the bound, just return it
   if (candidates.length === 0) return divisor
