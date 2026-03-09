@@ -12,22 +12,25 @@ const FALL_SPEED = 180                     // px/sec normal
 const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
+const MAX_BALL_NUMBER = 50                 // upper bound for numbers on balls
+const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle (cycle length = NUM_SLOTS × BALLS_PER_SLOT)
 
 // Bright distinct colours for each slot
 const SLOT_COLORS = [0xe74c3c, 0xe67e22, 0xf39c12, 0x27ae60, 0x2980b9, 0x8e44ad]
 const SLOT_COLORS_CSS = ['#e74c3c', '#e67e22', '#f39c12', '#27ae60', '#2980b9', '#8e44ad']
 
 // ── helpers ────────────────────────────────────────────────────────────────
-function generateBallNumber() {
-  // 65 % chance the number is a multiple of at least one slot
-  if (Math.random() < 0.65) {
-    const divisor = SLOT_VALUES[Math.floor(Math.random() * NUM_SLOTS)]
-    const multiplier = Math.floor(Math.random() * 9) + 2  // 2–10×
-    const value = divisor * multiplier
-    return Math.min(value, 99)
+
+// Returns a random multiple of `divisor` that is ≤ MAX_BALL_NUMBER and ≠ exclude.
+function multipleOf(divisor, exclude) {
+  const candidates = []
+  for (let m = 1; m * divisor <= MAX_BALL_NUMBER; m++) {
+    const val = m * divisor
+    if (val !== exclude) candidates.push(val)
   }
-  // 35 % chance: a random number in 2–50 (might or might not be a multiple)
-  return Math.floor(Math.random() * 49) + 2
+  // Fallback: if divisor itself exceeds the bound, just return it
+  if (candidates.length === 0) return divisor
+  return candidates[Math.floor(Math.random() * candidates.length)]
 }
 
 // ── scene ──────────────────────────────────────────────────────────────────
@@ -46,6 +49,8 @@ export default class GameScene extends Phaser.Scene {
     this.isGameOver = false
     this.ball = null
     this.isFast = false
+    this.lastBallValue = null  // excluded from next ball to prevent repeats
+    this.ballBag = []          // shuffled queue; refilled every NUM_SLOTS×BALLS_PER_SLOT balls
 
     // ── background ──
     this.add.rectangle(W / 2, H / 2, W, H, 0x1a1a2e)
@@ -144,7 +149,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Start in a random column
     this.ballColumn = Math.floor(Math.random() * NUM_SLOTS)
-    const value = generateBallNumber()
+    const value = this._nextBallValue()
     this.isFast = false
 
     // Ball container: circle + number
@@ -208,6 +213,29 @@ export default class GameScene extends Phaser.Scene {
     if (this.ballY + BALL_R >= slotTop) {
       this.landBall()
     }
+  }
+
+  // ── ball number generation ────────────────────────────────────────────────
+
+  // Refills the bag with BALLS_PER_SLOT copies of each slot index, then shuffles.
+  // This guarantees every slot receives exactly BALLS_PER_SLOT multiples per cycle.
+  _refillBag() {
+    const bag = []
+    for (let i = 0; i < NUM_SLOTS; i++) {
+      for (let j = 0; j < BALLS_PER_SLOT; j++) bag.push(i)
+    }
+    Phaser.Utils.Array.Shuffle(bag)
+    this.ballBag = bag
+  }
+
+  // Draws the next slot index from the bag (refilling if empty), then returns a
+  // random multiple of that slot's divisor that is ≠ the previous ball's value.
+  _nextBallValue() {
+    if (this.ballBag.length === 0) this._refillBag()
+    const slotIndex = this.ballBag.pop()
+    const value = multipleOf(SLOT_VALUES[slotIndex], this.lastBallValue)
+    this.lastBallValue = value
+    return value
   }
 
   // ── called from React touch buttons ──────────────────────────────────────
