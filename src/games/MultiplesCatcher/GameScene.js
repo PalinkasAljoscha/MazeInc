@@ -13,7 +13,7 @@ const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
 const MAX_BALL_NUMBER = 50                 // upper bound for numbers on balls
-const MIN_BALL_NUMBER = 50                 // lower bound for numbers on balls
+const MIN_BALL_NUMBER = 9                 // lower bound for numbers on balls
 const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle (cycle length = NUM_SLOTS × BALLS_PER_SLOT)
 
 // Bright distinct colours for each slot
