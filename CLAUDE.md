@@ -55,11 +55,7 @@ src/
 
 Each game exports:
 ```jsx
-export default function MultipleCatcher({ difficulty, onComplete }) {
-  const level = difficulty ?? meta.minLevel;
-  const params = LEVELS[level];
-  ...
-}
+export default function MultiplesCatcher({ level, onComplete }) { ... }
 export const meta = { id, title, topics, minLevel, maxLevel }
 ```
 
@@ -69,9 +65,9 @@ export const meta = { id, title, topics, minLevel, maxLevel }
 
 6 coloured slots at the bottom (`[2, 3, 4, 5, 6, 7]`). Balls fall one at a time; player steers with ← → (keyboard or touch) and drops with Space / ↓ button. A ball scores if its number is a multiple of the slot it lands in.
 
-**Ball generation** (`GameScene.js` constants):
-- `MIN_BALL_NUMBER = 9`, `MAX_BALL_NUMBER = 50` — range of values on balls
-- `BALLS_PER_SLOT = 2` — bag cycle size; every `NUM_SLOTS × BALLS_PER_SLOT` (12) balls, each slot gets exactly 2 multiples
+**Ball generation** (`GameScene.js`):
+- Level config (`LEVELS`) defines `slotValues`, `minBall`, `maxBall` per level (2–4)
+- `BALLS_PER_SLOT = 2` — bag ensures each slot gets exactly 2 multiples per cycle
 - No consecutive repeat: previous ball's value is excluded from the next draw
 
 **Feedback:**
