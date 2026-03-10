@@ -6,7 +6,7 @@ Game 1 (Multiples Catcher) is built and working. Next: play-test, refine, then b
 
 ## Target Audience
 
-Primary school children, roughly 6–10 years old.
+Primary school children.
 
 ---
 
@@ -38,6 +38,13 @@ src/
 
 ---
 
+## Coding Rules
+
+- **Use Color theme** — Never hardcode color values in components or Phaser scenes. Always import from src/theme.js. If needed add colors there.
+- **t() function for visible text** — Never hardcode visible text strings in components or Phaser scenes. Always use the t() translation function. Add new strings to all locale files when introducing new UI text.
+
+---
+
 ## Phaser + React Integration Pattern
 
 - React wrapper creates `Phaser.Game` on mount (scale mode `FIT`, internal res 480×680), destroys on unmount.
@@ -48,8 +55,12 @@ src/
 
 Each game exports:
 ```jsx
-export default function GameComponent({ difficulty = 1, onComplete }) { ... }
-export const meta = { id, title, topics, minAge, maxAge }
+export default function MultipleCatcher({ difficulty, onComplete }) {
+  const level = difficulty ?? meta.minLevel;
+  const params = LEVELS[level];
+  ...
+}
+export const meta = { id, title, topics, minLevel, maxLevel }
 ```
 
 ---
