@@ -2,11 +2,9 @@ import Phaser from 'phaser'
 import { palette, phaser as C } from '../../theme.js'
 import i18n from '../../i18n.js'
 
-// ── constants ──────────────────────────────────────────────────────────────
+// ── constants (level-independent) ─────────────────────────────────────────
 const GAME_W = 480
 const GAME_H = 680
-const SLOT_VALUES = [2, 3, 4, 5, 6, 7]   // divisors shown in bottom slots
-const NUM_SLOTS = SLOT_VALUES.length       // 6
 const SLOT_H = 90                          // height of the bottom slot row
 const HEADER_H = 60                        // top bar for score + timer
 const BALL_R = 32                          // ball radius
@@ -14,20 +12,25 @@ const FALL_SPEED = 140                    // px/sec normal
 const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
-const MAX_BALL_NUMBER = 50                 // upper bound for numbers on balls
-const MIN_BALL_NUMBER = 9                 // lower bound for numbers on balls
-const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle (cycle length = NUM_SLOTS × BALLS_PER_SLOT)
+const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle
+
+// ── level config ───────────────────────────────────────────────────────────
+const LEVELS = {
+  2: { slotValues: [2, 3, 4, 5, 6, 7],          maxBall: 30,  minBall: 5  },
+  3: { slotValues: [3, 4, 5, 7, 11, 12],         maxBall: 60,  minBall: 9  },
+  4: { slotValues: [2, 3, 4, 5, 7, 8, 9, 13],    maxBall: 100, minBall: 15 },
+}
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-// Returns a random multiple m of `divisor` such that MIN_BALL_NUMBER ≤ M ≤ MAX_BALL_NUMBER and ≠ exclude.
-function multipleOf(divisor, exclude) {
+// Returns a random multiple of `divisor` in [minBall, maxBall] that ≠ exclude.
+function multipleOf(divisor, exclude, minBall, maxBall) {
   const candidates = []
-  for (let m = 1; m * divisor <= MAX_BALL_NUMBER; m++) {
+  for (let m = 1; m * divisor <= maxBall; m++) {
     const val = m * divisor
-    if (val !== exclude && val >= MIN_BALL_NUMBER) candidates.push(val)
+    if (val !== exclude && val >= minBall) candidates.push(val)
   }
-  // Fallback: if divisor itself exceeds the bound, just return it
+  // Fallback: if no candidates exist, just return the divisor itself
   if (candidates.length === 0) return divisor
   return candidates[Math.floor(Math.random() * candidates.length)]
 }
@@ -43,13 +46,21 @@ export default class GameScene extends Phaser.Scene {
     const W = GAME_W
     const H = GAME_H
 
+    // ── read level config from registry ──
+    const level = this.registry.get('level') ?? 2
+    const levelCfg = LEVELS[level] ?? LEVELS[2]
+    this.slotValues = levelCfg.slotValues
+    this.numSlots   = this.slotValues.length
+    this.maxBall    = levelCfg.maxBall
+    this.minBall    = levelCfg.minBall
+
     this.score = 0
     this.timeLeft = GAME_DURATION
     this.isGameOver = false
     this.ball = null
     this.isFast = false
     this.lastBallValue = null  // excluded from next ball to prevent repeats
-    this.ballBag = []          // shuffled queue; refilled every NUM_SLOTS×BALLS_PER_SLOT balls
+    this.ballBag = []          // shuffled queue; refilled every numSlots×BALLS_PER_SLOT balls
 
     // ── background ──
     this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
@@ -79,13 +90,13 @@ export default class GameScene extends Phaser.Scene {
     div.lineBetween(0, HEADER_H, W, HEADER_H)
 
     // ── slot row ──
-    const slotW = W / NUM_SLOTS
+    const slotW = W / this.numSlots
     const slotY = H - SLOT_H
 
     // Slot background strip
     this.add.rectangle(W / 2, H - SLOT_H / 2, W, SLOT_H, C.slotStrip)
 
-    for (let i = 0; i < NUM_SLOTS; i++) {
+    for (let i = 0; i < this.numSlots; i++) {
       const cx = i * slotW + slotW / 2
       const cy = H - SLOT_H / 2
 
@@ -95,7 +106,7 @@ export default class GameScene extends Phaser.Scene {
       g.fillRoundedRect(i * slotW + 4, slotY + 4, slotW - 8, SLOT_H - 8, 10)
 
       // Slot number
-      this.add.text(cx, cy, String(SLOT_VALUES[i]), {
+      this.add.text(cx, cy, String(this.slotValues[i]), {
         fontSize: '38px',
         fontFamily: 'Arial Black, Arial',
         color: palette.white,
@@ -109,7 +120,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // ── "×" label above each slot (hint line) ──
+    // ── hint line above slot row ──
     const hintY = slotY - 14
     this.add.text(W / 2, hintY, i18n.t('multiplesCatcher.hud.hint'), {
       fontSize: '12px',
@@ -144,10 +155,10 @@ export default class GameScene extends Phaser.Scene {
     if (this.isGameOver) return
 
     const W = GAME_W
-    const slotW = W / NUM_SLOTS
+    const slotW = W / this.numSlots
 
     // Start in a random column
-    this.ballColumn = Math.floor(Math.random() * NUM_SLOTS)
+    this.ballColumn = Math.floor(Math.random() * this.numSlots)
     const value = this._nextBallValue()
     this.isFast = false
 
@@ -179,7 +190,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.isGameOver || !this.ball) return
 
     const W = GAME_W
-    const slotW = W / NUM_SLOTS
+    const slotW = W / this.numSlots
     const slotTop = GAME_H - SLOT_H
 
     // ── horizontal movement (keyboard) ──
@@ -220,7 +231,7 @@ export default class GameScene extends Phaser.Scene {
   // This guarantees every slot receives exactly BALLS_PER_SLOT multiples per cycle.
   _refillBag() {
     const bag = []
-    for (let i = 0; i < NUM_SLOTS; i++) {
+    for (let i = 0; i < this.numSlots; i++) {
       for (let j = 0; j < BALLS_PER_SLOT; j++) bag.push(i)
     }
     Phaser.Utils.Array.Shuffle(bag)
@@ -232,7 +243,7 @@ export default class GameScene extends Phaser.Scene {
   _nextBallValue() {
     if (this.ballBag.length === 0) this._refillBag()
     const slotIndex = this.ballBag.pop()
-    const value = multipleOf(SLOT_VALUES[slotIndex], this.lastBallValue)
+    const value = multipleOf(this.slotValues[slotIndex], this.lastBallValue, this.minBall, this.maxBall)
     this.lastBallValue = value
     return value
   }
@@ -240,7 +251,7 @@ export default class GameScene extends Phaser.Scene {
   // ── called from React touch buttons ──────────────────────────────────────
   moveBall(dir) {
     if (!this.ball || this.isGameOver) return
-    this.ballColumn = Phaser.Math.Clamp(this.ballColumn + dir, 0, NUM_SLOTS - 1)
+    this.ballColumn = Phaser.Math.Clamp(this.ballColumn + dir, 0, this.numSlots - 1)
   }
 
   dropBall() {
@@ -250,12 +261,12 @@ export default class GameScene extends Phaser.Scene {
 
   // ── landing ───────────────────────────────────────────────────────────────
   landBall() {
-    const slotValue = SLOT_VALUES[this.ballColumn]
+    const slotValue = this.slotValues[this.ballColumn]
     const ballValue = this.ball.value
     const correct = ballValue % slotValue === 0
 
     const W = GAME_W
-    const slotW = W / NUM_SLOTS
+    const slotW = W / this.numSlots
     const landX = this.ballColumn * slotW + slotW / 2
     const landY = GAME_H - SLOT_H / 2
 

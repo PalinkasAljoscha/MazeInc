@@ -4,7 +4,7 @@ import Phaser from 'phaser'
 import GameScene from './GameScene'
 import { palette } from '../../theme.js'
 
-export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
+export default function MultiplesCatcher({ level = 2, onComplete }) {
   const { t } = useTranslation()
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
@@ -24,6 +24,7 @@ export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
     }
 
     const game = new Phaser.Game(config)
+    game.registry.set('level', level)
 
     game.events.on('sceneReady', (scene) => {
       sceneRef.current = scene
@@ -86,4 +87,6 @@ export const meta = {
   topics: ['multiples', 'multiplication'],
   minAge: 7,
   maxAge: 10,
+  minLevel: 2,
+  maxLevel: 4,
 }

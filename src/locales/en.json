@@ -1,4 +1,12 @@
 {
+  "levels": {
+    "label": "Level",
+    "1": "Hasenmatt",
+    "2": "Rigi",
+    "3": "Eiger",
+    "4": "Matterhorn",
+    "5": "Mont Blanc"
+  },
   "home": {
     "title": "Math Trainer",
     "subtitle": "Pick a game and start playing!",

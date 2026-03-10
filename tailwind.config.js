@@ -17,6 +17,8 @@ export default {
           'obj-basic-green':  palette.objBasicGreen,
           'obj-basic-blue':   palette.objBasicBlue,
           'obj-basic-purple': palette.objBasicPurple,
+          'obj-basic-teal':   palette.objBasicTeal,
+          'obj-basic-pink':   palette.objBasicPink,
           ball:         palette.ballFill,
           'ball-border':palette.ballBorder,
           score:        palette.scoreYellow,

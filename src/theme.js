@@ -17,6 +17,8 @@ export const palette = {
   objBasicGreen:  '#27ae60',
   objBasicBlue:   '#2980b9',
   objBasicPurple: '#8e44ad',
+  objBasicTeal:   '#1abc9c',
+  objBasicPink:   '#e91e63',
 
   // ── Ball ──
   ballFill:     '#ff6b35',
@@ -48,9 +50,11 @@ export const phaser = {
   slotStrip:     toHex(palette.slotStrip),
   divider:       toHex(palette.divider),
   slotColors:    [palette.objBasicRed, palette.objBasicOrange, palette.objBasicYellow,
-                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple].map(toHex),
+                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple,
+                  palette.objBasicTeal, palette.objBasicPink].map(toHex),
   slotColorsCss: [palette.objBasicRed, palette.objBasicOrange, palette.objBasicYellow,
-                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple],
+                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple,
+                  palette.objBasicTeal, palette.objBasicPink],
   ballFill:      toHex(palette.ballFill),
   ballBorder:    toHex(palette.ballBorder),
   scoreYellow:   toHex(palette.scoreYellow),

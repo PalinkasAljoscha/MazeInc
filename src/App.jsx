@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import MultiplesCatcher from './games/MultiplesCatcher'
+import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
+
+const ALL_LEVELS = [1, 2, 3, 4, 5]
 
 const GAMES = [
   {
@@ -10,11 +12,21 @@ const GAMES = [
     emoji: '🎯',
     color: 'from-purple-500 to-indigo-600',
     shadow: 'shadow-indigo-300',
+    minLevel: multiplesCatcherMeta.minLevel,
+    maxLevel: multiplesCatcherMeta.maxLevel,
   },
 ]
 
 function HomePage({ onSelectGame }) {
   const { t } = useTranslation()
+
+  const [selectedLevels, setSelectedLevels] = useState(
+    Object.fromEntries(GAMES.map((g) => [g.id, g.minLevel]))
+  )
+
+  const setLevel = (gameId, lvl) =>
+    setSelectedLevels((prev) => ({ ...prev, [gameId]: lvl }))
+
   return (
     <div className="w-screen h-screen flex flex-col items-center bg-gradient-to-b from-sky-400 to-blue-600 overflow-auto py-8 px-4">
       {/* Title */}
@@ -31,13 +43,11 @@ function HomePage({ onSelectGame }) {
       {/* Game cards */}
       <div className="flex flex-col gap-5 w-full max-w-sm">
         {GAMES.map((game) => (
-          <button
+          <div
             key={game.id}
-            onClick={() => onSelectGame(game.id)}
             className={`
               bg-gradient-to-br ${game.color} ${game.shadow}
               rounded-3xl p-6 text-left shadow-xl
-              active:scale-95 transition-transform duration-100
               border-4 border-white/30
             `}
           >
@@ -46,10 +56,45 @@ function HomePage({ onSelectGame }) {
             <p className="text-white/90 font-semibold text-sm leading-snug">
               {t(game.descKey)}
             </p>
-            <div className="mt-4 inline-block bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg">
-              {t('home.play')}
+
+            {/* Level selector */}
+            <p className="text-white/70 text-xs font-bold mt-3 mb-1.5">
+              {t('levels.label')}
+            </p>
+            <div className="flex gap-1.5">
+              {ALL_LEVELS.map((lvl) => {
+                const supported = lvl >= game.minLevel && lvl <= game.maxLevel
+                const selected = selectedLevels[game.id] === lvl
+                return (
+                  <button
+                    key={lvl}
+                    disabled={!supported}
+                    onClick={() => setLevel(game.id, lvl)}
+                    className={`
+                      flex-1 rounded-xl py-1.5 px-0.5 text-center transition-colors
+                      ${selected
+                        ? 'bg-white text-gray-800 shadow'
+                        : supported
+                        ? 'bg-white/20 text-white hover:bg-white/30'
+                        : 'bg-black/10 text-white/25 cursor-not-allowed'}
+                    `}
+                  >
+                    <div className="text-xs font-black">{lvl}</div>
+                    <div className="text-[8px] leading-tight font-semibold break-words">
+                      {t(`levels.${lvl}`)}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
-          </button>
+
+            <button
+              onClick={() => onSelectGame(game.id, selectedLevels[game.id])}
+              className="mt-4 bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg active:scale-95 transition-transform duration-100"
+            >
+              {t('home.play')}
+            </button>
+          </div>
         ))}
 
         {/* Placeholder for future games */}
@@ -65,6 +110,12 @@ function HomePage({ onSelectGame }) {
 export default function App() {
   const { t } = useTranslation()
   const [activeGame, setActiveGame] = useState(null)
+  const [activeLevel, setActiveLevel] = useState(null)
+
+  function handleSelectGame(gameId, level) {
+    setActiveGame(gameId)
+    setActiveLevel(level)
+  }
 
   if (activeGame === 'multiples-catcher') {
     const game = GAMES.find((g) => g.id === activeGame)
@@ -84,9 +135,8 @@ export default function App() {
         {/* Game fills remaining space */}
         <div className="flex-1 min-h-0">
           <MultiplesCatcher
-            difficulty={1}
+            level={activeLevel}
             onComplete={(result) => {
-              // Could navigate back or show result; game handles its own end screen
               console.log('Game complete', result)
             }}
           />
@@ -95,5 +145,5 @@ export default function App() {
     )
   }
 
-  return <HomePage onSelectGame={setActiveGame} />
+  return <HomePage onSelectGame={handleSelectGame} />
 }
