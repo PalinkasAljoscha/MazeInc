@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { palette, phaser as C } from '../../theme.js'
+import i18n from '../../i18n.js'
 
 // ── constants ──────────────────────────────────────────────────────────────
 const GAME_W = 480
@@ -56,7 +57,7 @@ export default class GameScene extends Phaser.Scene {
     // ── header ──
     this.add.rectangle(W / 2, HEADER_H / 2, W, HEADER_H, C.gameHeader)
 
-    this.scoreText = this.add.text(16, HEADER_H / 2, 'Score: 0', {
+    this.scoreText = this.add.text(16, HEADER_H / 2, i18n.t('multiplesCatcher.hud.score', { score: 0 }), {
       fontSize: '26px',
       fontFamily: 'Arial Black, Arial',
       color: palette.scoreYellow,
@@ -110,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
 
     // ── "×" label above each slot (hint line) ──
     const hintY = slotY - 14
-    this.add.text(W / 2, hintY, '— drop the ball in the right slot —', {
+    this.add.text(W / 2, hintY, i18n.t('multiplesCatcher.hud.hint'), {
       fontSize: '12px',
       fontFamily: 'Arial, sans-serif',
       color: palette.hintGray,
@@ -265,7 +266,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (correct) {
       this.score++
-      this.scoreText.setText('Score: ' + this.score)
+      this.scoreText.setText(i18n.t('multiplesCatcher.hud.score', { score: this.score }))
       this.showCorrect(landX, landY, ballValue, slotValue)
     } else {
       this.showWrong(landX, landY, ballValue, slotValue)
@@ -292,7 +293,7 @@ export default class GameScene extends Phaser.Scene {
     })
 
     // ✓ tick + equation label
-    const label = this.add.text(x, y - 65, `${ballVal} ÷ ${slotVal} = ${ballVal / slotVal} ✓`, {
+    const label = this.add.text(x, y - 65, i18n.t('multiplesCatcher.feedback.correct', { ballVal, slotVal, result: ballVal / slotVal }), {
       fontSize: '18px',
       fontFamily: 'Arial Black, Arial',
       color: palette.correctGreen,
@@ -338,7 +339,7 @@ export default class GameScene extends Phaser.Scene {
     })
 
     // ✗ label
-    const label = this.add.text(x, y - 65, `${ballVal} ÷ ${slotVal}  ✗`, {
+    const label = this.add.text(x, y - 65, i18n.t('multiplesCatcher.feedback.wrong', { ballVal, slotVal }), {
       fontSize: '18px',
       fontFamily: 'Arial Black, Arial',
       color: palette.wrongRed,
@@ -397,13 +398,13 @@ export default class GameScene extends Phaser.Scene {
     panel.fillStyle(C.gameHeader, 1)
     panel.fillRoundedRect(W / 2 - 160, H / 2 - 140, 320, 280, 24)
 
-    this.add.text(W / 2, H / 2 - 95, 'Time\'s up! 🎉', {
+    this.add.text(W / 2, H / 2 - 95, i18n.t('multiplesCatcher.gameOver.title'), {
       fontSize: '30px',
       fontFamily: 'Arial Black, Arial',
       color: palette.scoreYellow,
     }).setOrigin(0.5)
 
-    this.add.text(W / 2, H / 2 - 30, 'Your score:', {
+    this.add.text(W / 2, H / 2 - 30, i18n.t('multiplesCatcher.gameOver.scoreLabel'), {
       fontSize: '20px',
       fontFamily: 'Arial, sans-serif',
       color: palette.silverGray,
@@ -420,7 +421,7 @@ export default class GameScene extends Phaser.Scene {
     btnBg.fillStyle(C.btnBlue, 1)
     btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
 
-    const btnText = this.add.text(W / 2, H / 2 + 118, 'Play Again', {
+    const btnText = this.add.text(W / 2, H / 2 + 118, i18n.t('multiplesCatcher.gameOver.playAgain'), {
       fontSize: '24px',
       fontFamily: 'Arial Black, Arial',
       color: palette.white,

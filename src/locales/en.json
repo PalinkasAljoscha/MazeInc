@@ -1,0 +1,33 @@
+{
+  "home": {
+    "title": "Math Trainer",
+    "subtitle": "Pick a game and start playing!",
+    "play": "Play →",
+    "comingSoon": "More games coming soon!",
+    "backButton": "← Home"
+  },
+  "games": {
+    "multiplesCatcher": {
+      "title": "Multiples Catcher",
+      "description": "Catch falling balls in the right slot! Is the number a multiple of the slot number?"
+    }
+  },
+  "multiplesCatcher": {
+    "hud": {
+      "score": "Score: {{score}}",
+      "hint": "— drop the ball in the right slot —"
+    },
+    "controls": {
+      "drop": "↓ Drop"
+    },
+    "feedback": {
+      "correct": "{{ballVal}} ÷ {{slotVal}} = {{result}} ✓",
+      "wrong": "{{ballVal}} ÷ {{slotVal}}  ✗"
+    },
+    "gameOver": {
+      "title": "Time's up! 🎉",
+      "scoreLabel": "Your score:",
+      "playAgain": "Play Again"
+    }
+  }
+}

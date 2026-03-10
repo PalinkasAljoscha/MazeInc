@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Phaser from 'phaser'
 import GameScene from './GameScene'
 import { palette } from '../../theme.js'
 
 export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
+  const { t } = useTranslation()
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
 
@@ -50,7 +52,7 @@ export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
       {/* On-screen touch controls */}
       <div className="w-full max-w-[480px] flex items-center justify-between px-6 py-3 bg-gray-900 border-t border-gray-700 shrink-0">
         <TouchButton onPress={handleLeft} label="←" color="bg-indigo-600 active:bg-indigo-400" />
-        <TouchButton onPress={handleDrop} label="↓ Drop" color="bg-amber-500 active:bg-amber-300" wide />
+        <TouchButton onPress={handleDrop} label={t('multiplesCatcher.controls.drop')} color="bg-amber-500 active:bg-amber-300" wide />
         <TouchButton onPress={handleRight} label="→" color="bg-indigo-600 active:bg-indigo-400" />
       </div>
     </div>

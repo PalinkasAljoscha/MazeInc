@@ -1,28 +1,30 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import MultiplesCatcher from './games/MultiplesCatcher'
 
 const GAMES = [
   {
     id: 'multiples-catcher',
-    title: 'Multiples Catcher',
+    titleKey: 'games.multiplesCatcher.title',
+    descKey: 'games.multiplesCatcher.description',
     emoji: '🎯',
-    description: 'Catch falling balls in the right slot! Is the number a multiple of the slot number?',
     color: 'from-purple-500 to-indigo-600',
     shadow: 'shadow-indigo-300',
   },
 ]
 
 function HomePage({ onSelectGame }) {
+  const { t } = useTranslation()
   return (
     <div className="w-screen h-screen flex flex-col items-center bg-gradient-to-b from-sky-400 to-blue-600 overflow-auto py-8 px-4">
       {/* Title */}
       <div className="text-center mb-10">
         <div className="text-6xl mb-2">🧮</div>
         <h1 className="text-5xl font-black text-white drop-shadow-lg tracking-wide">
-          Math Trainer
+          {t('home.title')}
         </h1>
         <p className="text-blue-100 text-xl mt-2 font-bold">
-          Pick a game and start playing!
+          {t('home.subtitle')}
         </p>
       </div>
 
@@ -40,12 +42,12 @@ function HomePage({ onSelectGame }) {
             `}
           >
             <div className="text-5xl mb-3">{game.emoji}</div>
-            <h2 className="text-2xl font-black text-white mb-1">{game.title}</h2>
+            <h2 className="text-2xl font-black text-white mb-1">{t(game.titleKey)}</h2>
             <p className="text-white/90 font-semibold text-sm leading-snug">
-              {game.description}
+              {t(game.descKey)}
             </p>
             <div className="mt-4 inline-block bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg">
-              Play →
+              {t('home.play')}
             </div>
           </button>
         ))}
@@ -53,7 +55,7 @@ function HomePage({ onSelectGame }) {
         {/* Placeholder for future games */}
         <div className="rounded-3xl p-6 border-4 border-dashed border-white/40 text-center opacity-60">
           <div className="text-4xl mb-2">🔜</div>
-          <p className="text-white font-black text-lg">More games coming soon!</p>
+          <p className="text-white font-black text-lg">{t('home.comingSoon')}</p>
         </div>
       </div>
     </div>
@@ -61,9 +63,11 @@ function HomePage({ onSelectGame }) {
 }
 
 export default function App() {
+  const { t } = useTranslation()
   const [activeGame, setActiveGame] = useState(null)
 
   if (activeGame === 'multiples-catcher') {
+    const game = GAMES.find((g) => g.id === activeGame)
     return (
       <div className="w-screen h-screen flex flex-col bg-gray-900">
         {/* Header bar */}
@@ -72,9 +76,9 @@ export default function App() {
             onClick={() => setActiveGame(null)}
             className="text-white font-black text-lg bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-xl px-4 py-1 transition-colors"
           >
-            ← Home
+            {t('home.backButton')}
           </button>
-          <h1 className="text-white font-black text-xl">🎯 Multiples Catcher</h1>
+          <h1 className="text-white font-black text-xl">{game.emoji} {t(game.titleKey)}</h1>
         </div>
 
         {/* Game fills remaining space */}
