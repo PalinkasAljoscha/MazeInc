@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { palette, phaser as C } from '../../theme.js'
 
 // ── constants ──────────────────────────────────────────────────────────────
 const GAME_W = 480
@@ -15,10 +16,6 @@ const GAME_DURATION = 60                   // seconds
 const MAX_BALL_NUMBER = 50                 // upper bound for numbers on balls
 const MIN_BALL_NUMBER = 9                 // lower bound for numbers on balls
 const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle (cycle length = NUM_SLOTS × BALLS_PER_SLOT)
-
-// Bright distinct colours for each slot
-const SLOT_COLORS = [0xe74c3c, 0xe67e22, 0xf39c12, 0x27ae60, 0x2980b9, 0x8e44ad]
-const SLOT_COLORS_CSS = ['#e74c3c', '#e67e22', '#f39c12', '#27ae60', '#2980b9', '#8e44ad']
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -54,21 +51,21 @@ export default class GameScene extends Phaser.Scene {
     this.ballBag = []          // shuffled queue; refilled every NUM_SLOTS×BALLS_PER_SLOT balls
 
     // ── background ──
-    this.add.rectangle(W / 2, H / 2, W, H, 0x1a1a2e)
+    this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
 
     // ── header ──
-    this.add.rectangle(W / 2, HEADER_H / 2, W, HEADER_H, 0x16213e)
+    this.add.rectangle(W / 2, HEADER_H / 2, W, HEADER_H, C.gameHeader)
 
     this.scoreText = this.add.text(16, HEADER_H / 2, 'Score: 0', {
       fontSize: '26px',
       fontFamily: 'Arial Black, Arial',
-      color: '#f1c40f',
+      color: palette.scoreYellow,
     }).setOrigin(0, 0.5)
 
     this.timerText = this.add.text(W - 16, HEADER_H / 2, '60', {
       fontSize: '26px',
       fontFamily: 'Arial Black, Arial',
-      color: '#ecf0f1',
+      color: palette.timerLight,
     }).setOrigin(1, 0.5)
 
     this.add.text(W / 2, HEADER_H / 2, '⏱', {
@@ -77,7 +74,7 @@ export default class GameScene extends Phaser.Scene {
 
     // ── divider ──
     const div = this.add.graphics()
-    div.lineStyle(2, 0x2c3e50, 1)
+    div.lineStyle(2, C.divider, 1)
     div.lineBetween(0, HEADER_H, W, HEADER_H)
 
     // ── slot row ──
@@ -85,7 +82,7 @@ export default class GameScene extends Phaser.Scene {
     const slotY = H - SLOT_H
 
     // Slot background strip
-    this.add.rectangle(W / 2, H - SLOT_H / 2, W, SLOT_H, 0x0d0d1a)
+    this.add.rectangle(W / 2, H - SLOT_H / 2, W, SLOT_H, C.slotStrip)
 
     for (let i = 0; i < NUM_SLOTS; i++) {
       const cx = i * slotW + slotW / 2
@@ -93,20 +90,20 @@ export default class GameScene extends Phaser.Scene {
 
       // Slot coloured tile
       const g = this.add.graphics()
-      g.fillStyle(SLOT_COLORS[i], 0.85)
+      g.fillStyle(C.slotColors[i], 0.85)
       g.fillRoundedRect(i * slotW + 4, slotY + 4, slotW - 8, SLOT_H - 8, 10)
 
       // Slot number
       this.add.text(cx, cy, String(SLOT_VALUES[i]), {
         fontSize: '38px',
         fontFamily: 'Arial Black, Arial',
-        color: '#ffffff',
+        color: palette.white,
       }).setOrigin(0.5)
 
       // Divider between slots
       if (i > 0) {
         const dg = this.add.graphics()
-        dg.lineStyle(2, 0x1a1a2e, 1)
+        dg.lineStyle(2, C.gameBg, 1)
         dg.lineBetween(i * slotW, slotY, i * slotW, H)
       }
     }
@@ -116,7 +113,7 @@ export default class GameScene extends Phaser.Scene {
     this.add.text(W / 2, hintY, '— drop the ball in the right slot —', {
       fontSize: '12px',
       fontFamily: 'Arial, sans-serif',
-      color: '#7f8c8d',
+      color: palette.hintGray,
     }).setOrigin(0.5)
 
     // ── keyboard ──
@@ -159,8 +156,8 @@ export default class GameScene extends Phaser.Scene {
 
     // Circle graphic
     const bg = this.add.graphics()
-    bg.fillStyle(0xff6b35, 1)
-    bg.lineStyle(4, 0xffeaa7, 1)
+    bg.fillStyle(C.ballFill, 1)
+    bg.lineStyle(4, C.ballBorder, 1)
     bg.fillCircle(0, 0, BALL_R)
     bg.strokeCircle(0, 0, BALL_R)
     bg.setPosition(cx, startY)
@@ -169,7 +166,7 @@ export default class GameScene extends Phaser.Scene {
     const numText = this.add.text(cx, startY, String(value), {
       fontSize: value >= 10 ? '26px' : '32px',
       fontFamily: 'Arial Black, Arial',
-      color: '#ffffff',
+      color: palette.white,
     }).setOrigin(0.5)
 
     this.ball = { bg, numText, value, y: startY }
@@ -282,7 +279,7 @@ export default class GameScene extends Phaser.Scene {
   showCorrect(x, y, ballVal, slotVal) {
     // Green burst
     const g = this.add.graphics()
-    g.fillStyle(0x2ecc71, 0.8)
+    g.fillStyle(C.correctGreen, 0.8)
     g.fillCircle(x, y, 55)
     this.tweens.add({
       targets: g,
@@ -298,7 +295,7 @@ export default class GameScene extends Phaser.Scene {
     const label = this.add.text(x, y - 65, `${ballVal} ÷ ${slotVal} = ${ballVal / slotVal} ✓`, {
       fontSize: '18px',
       fontFamily: 'Arial Black, Arial',
-      color: '#2ecc71',
+      color: palette.correctGreen,
     }).setOrigin(0.5)
     this.tweens.add({
       targets: label,
@@ -313,7 +310,7 @@ export default class GameScene extends Phaser.Scene {
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2
       const dot = this.add.graphics()
-      dot.fillStyle(0xf1c40f, 1)
+      dot.fillStyle(C.scoreYellow, 1)
       dot.fillCircle(0, 0, 6)
       dot.setPosition(x, y)
       this.tweens.add({
@@ -331,7 +328,7 @@ export default class GameScene extends Phaser.Scene {
   showWrong(x, y, ballVal, slotVal) {
     // Red flash
     const g = this.add.graphics()
-    g.fillStyle(0xe74c3c, 0.75)
+    g.fillStyle(C.wrongRed, 0.75)
     g.fillCircle(x, y, 55)
     this.tweens.add({
       targets: g,
@@ -344,7 +341,7 @@ export default class GameScene extends Phaser.Scene {
     const label = this.add.text(x, y - 65, `${ballVal} ÷ ${slotVal}  ✗`, {
       fontSize: '18px',
       fontFamily: 'Arial Black, Arial',
-      color: '#e74c3c',
+      color: palette.wrongRed,
     }).setOrigin(0.5)
     this.tweens.add({
       targets: label,
@@ -366,7 +363,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Turn timer red when time is short
     if (this.timeLeft <= 10) {
-      this.timerText.setStyle({ color: '#e74c3c' })
+      this.timerText.setStyle({ color: palette.wrongRed })
     }
 
     if (this.timeLeft <= 0) {
@@ -393,40 +390,40 @@ export default class GameScene extends Phaser.Scene {
     const H = GAME_H
 
     // Dark overlay
-    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.75)
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, C.overlayBlack, 0.75)
 
     // Panel
     const panel = this.add.graphics()
-    panel.fillStyle(0x16213e, 1)
+    panel.fillStyle(C.gameHeader, 1)
     panel.fillRoundedRect(W / 2 - 160, H / 2 - 140, 320, 280, 24)
 
     this.add.text(W / 2, H / 2 - 95, 'Time\'s up! 🎉', {
       fontSize: '30px',
       fontFamily: 'Arial Black, Arial',
-      color: '#f1c40f',
+      color: palette.scoreYellow,
     }).setOrigin(0.5)
 
     this.add.text(W / 2, H / 2 - 30, 'Your score:', {
       fontSize: '20px',
       fontFamily: 'Arial, sans-serif',
-      color: '#bdc3c7',
+      color: palette.silverGray,
     }).setOrigin(0.5)
 
     this.add.text(W / 2, H / 2 + 30, String(this.score), {
       fontSize: '72px',
       fontFamily: 'Arial Black, Arial',
-      color: '#2ecc71',
+      color: palette.correctGreen,
     }).setOrigin(0.5)
 
     // Play Again button
     const btnBg = this.add.graphics()
-    btnBg.fillStyle(0x3498db, 1)
+    btnBg.fillStyle(C.btnBlue, 1)
     btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
 
     const btnText = this.add.text(W / 2, H / 2 + 118, 'Play Again', {
       fontSize: '24px',
       fontFamily: 'Arial Black, Arial',
-      color: '#ffffff',
+      color: palette.white,
     }).setOrigin(0.5)
 
     // Make the button interactive
@@ -436,12 +433,12 @@ export default class GameScene extends Phaser.Scene {
     })
     btnZone.on('pointerover', () => {
       btnBg.clear()
-      btnBg.fillStyle(0x2980b9, 1)
+      btnBg.fillStyle(C.btnBlueHover, 1)
       btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
     })
     btnZone.on('pointerout', () => {
       btnBg.clear()
-      btnBg.fillStyle(0x3498db, 1)
+      btnBg.fillStyle(C.btnBlue, 1)
       btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
     })
 

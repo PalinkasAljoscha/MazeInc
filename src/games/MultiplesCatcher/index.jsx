@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Phaser from 'phaser'
 import GameScene from './GameScene'
+import { palette } from '../../theme.js'
 
 export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
   const containerRef = useRef(null)
@@ -9,7 +10,7 @@ export default function MultiplesCatcher({ difficulty = 1, onComplete }) {
   useEffect(() => {
     const config = {
       type: Phaser.AUTO,
-      backgroundColor: '#1a1a2e',
+      backgroundColor: palette.gameBg,
       scene: [GameScene],
       scale: {
         mode: Phaser.Scale.FIT,
