@@ -30,6 +30,11 @@ React wraps it as a component and handles everything outside the game canvas.
 ```
 src/
   App.jsx                          # Home page + game routing (add new games to GAMES array here)
+  theme.js                         # All colors — palette (CSS strings) + phaser (hex integers)
+  i18n.js                          # i18next setup; imports locale files
+  main.jsx                         # Entry point
+  locales/
+    en.json                        # All UI strings — add keys here for every new game
   games/
     MultiplesCatcher/
       index.jsx                    # React wrapper + on-screen touch buttons
@@ -40,8 +45,9 @@ src/
 
 ## Coding Rules
 
-- **Use Color theme** — Never hardcode color values in components or Phaser scenes. Always import from src/theme.js. If needed add colors there.
-- **t() function for visible text** — Never hardcode visible text strings in components or Phaser scenes. Always use the t() translation function. Add new strings to all locale files when introducing new UI text.
+- **Colors** — Never hardcode color values. Import from `src/theme.js`. Add new named colors there when needed; use `C.slotColors[i]` (8 available) for colored game objects.
+- **Strings** — Never hardcode visible text. Use `t()` everywhere. Add keys to all locale files for every new string.
+- **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
 
 ---
 
@@ -55,9 +61,17 @@ src/
 
 Each game exports:
 ```jsx
-export default function MultiplesCatcher({ level, onComplete }) { ... }
-export const meta = { id, title, topics, minLevel, maxLevel }
+export default function MyGame({ level, onComplete }) { ... }
+export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 ```
+
+**Level system** — each game defines a `LEVELS` object in `GameScene.js` keyed by level number. The React wrapper passes the chosen level into Phaser via `game.registry.set('level', level)`; the scene reads it back in `create()` with `this.registry.get('level')`.
+
+**Adding a new game:**
+1. Create `src/games/MyGame/index.jsx` (React wrapper + touch controls) and `GameScene.js` (Phaser scene with `LEVELS` config)
+2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`
+3. Import meta and add an entry to the `GAMES` array in `App.jsx`
+4. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json`
 
 ---
 
@@ -91,6 +105,5 @@ export const meta = { id, title, topics, minLevel, maxLevel }
 
 - Sound effects deferred (needs user gesture on mobile to unlock audio)
 - Game 2 to be defined after play-testing game 1
-- Difficulty progression not yet designed
 
 *Update this file at the end of each session with decisions made.*
