@@ -10,13 +10,13 @@ export const palette = {
   slotStrip:    '#0d0d1a',
   divider:      '#2c3e50',
 
-  // ── Slot fill colors (order matches SLOT_VALUES = [2, 3, 4, 5, 6, 7]) ──
-  slotRed:      '#e74c3c',
-  slotOrange:   '#e67e22',
-  slotYellow:   '#f39c12',
-  slotGreen:    '#27ae60',
-  slotBlue:     '#2980b9',
-  slotPurple:   '#8e44ad',
+  // ── Object colors — basic palette (order matches SLOT_VALUES = [2, 3, 4, 5, 6, 7]) ──
+  objBasicRed:    '#e74c3c',
+  objBasicOrange: '#e67e22',
+  objBasicYellow: '#f39c12',
+  objBasicGreen:  '#27ae60',
+  objBasicBlue:   '#2980b9',
+  objBasicPurple: '#8e44ad',
 
   // ── Ball ──
   ballFill:     '#ff6b35',
@@ -47,10 +47,10 @@ export const phaser = {
   gameHeader:    toHex(palette.gameHeader),
   slotStrip:     toHex(palette.slotStrip),
   divider:       toHex(palette.divider),
-  slotColors:    [palette.slotRed, palette.slotOrange, palette.slotYellow,
-                  palette.slotGreen, palette.slotBlue, palette.slotPurple].map(toHex),
-  slotColorsCss: [palette.slotRed, palette.slotOrange, palette.slotYellow,
-                  palette.slotGreen, palette.slotBlue, palette.slotPurple],
+  slotColors:    [palette.objBasicRed, palette.objBasicOrange, palette.objBasicYellow,
+                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple].map(toHex),
+  slotColorsCss: [palette.objBasicRed, palette.objBasicOrange, palette.objBasicYellow,
+                  palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple],
   ballFill:      toHex(palette.ballFill),
   ballBorder:    toHex(palette.ballBorder),
   scoreYellow:   toHex(palette.scoreYellow),
