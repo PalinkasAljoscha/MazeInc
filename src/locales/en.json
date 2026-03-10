@@ -29,7 +29,7 @@
       "drop": "↓ Drop"
     },
     "feedback": {
-      "correct": "{{ballVal}} ÷ {{slotVal}} = {{result}} ✓",
+      "correct": "{{ballVal}} = {{slotVal}} × {{result}} ✓",
       "wrong": "{{ballVal}} ÷ {{slotVal}}  ✗"
     },
     "gameOver": {
