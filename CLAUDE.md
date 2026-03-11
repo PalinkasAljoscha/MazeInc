@@ -48,6 +48,18 @@ src/
 - **Colors** — Never hardcode color values. Import from `src/theme.js`. Add new named colors there when needed; use `C.slotColors[i]` (8 available) for colored game objects.
 - **Strings** — Never hardcode visible text. Use `t()` everywhere. Add keys to all locale files for every new string.
 - **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
+- **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names. This ensures the app works correctly when published to any subdirectory or hosting provider.
+- **Prototyping folder** — `prototyping/` contains exploratory simulations and rough sketches. Never import from or copy code directly from this folder into the app. It may be read as reference to understand intended logic, but all app code must be written cleanly from scratch.
+
+---
+
+## Branching Strategy
+
+- `main` — always stable and deployable; never commit directly to this branch
+- `dev` — ongoing integration branch; merge feature branches here first
+- `feature/<short-description>` — one branch per feature or game (e.g. `feature/level-picker`, `feature/game2`)
+
+Always start a new session by creating or checking out the appropriate feature branch. Merge to `dev` when the feature is complete and tested, and to `main` only when `dev` is stable.
 
 ---
 
