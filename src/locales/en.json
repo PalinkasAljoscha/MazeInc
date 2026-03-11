@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Maze Inc."
+  },
   "levels": {
     "label": "Level",
     "1": "Hasenmatt",

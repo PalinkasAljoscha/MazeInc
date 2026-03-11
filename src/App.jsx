@@ -33,7 +33,7 @@ function HomePage({ onSelectGame }) {
       <div className="text-center mb-10">
         <div className="text-6xl mb-2">🧮</div>
         <h1 className="text-5xl font-black text-white drop-shadow-lg tracking-wide">
-          {t('home.title')}
+          {t('app.name')}
         </h1>
         <p className="text-blue-100 text-xl mt-2 font-bold">
           {t('home.subtitle')}
@@ -129,7 +129,10 @@ export default function App() {
           >
             {t('home.backButton')}
           </button>
-          <h1 className="text-white font-black text-xl">{game.emoji} {t(game.titleKey)}</h1>
+          <div>
+            <div className="text-white/60 text-xs font-bold leading-none">{t('app.name')}</div>
+            <h1 className="text-white font-black text-xl leading-tight">{game.emoji} {t(game.titleKey)}</h1>
+          </div>
         </div>
 
         {/* Game fills remaining space */}
