@@ -1,12 +1,11 @@
-# Kids Math Learning App — Project Guide
+# "Maze Inc." is a fun and Training App for games and excercises in mathematics
 
-## Current Focus
-
-Game 1 (Multiples Catcher) is built and working. Next: play-test, refine, then build game 2.
+## App identity
+**Name: Maze Inc.**  this is the name of the app. This is a fun game and excercise app with numbers and other concepts from mathematics, it's about training, playing and discovering.
 
 ## Target Audience
 
-Primary school children.
+Primary school children and anyone interested to discover fun games related to math.
 
 ---
 
