@@ -8,7 +8,7 @@ const GAME_H = 680
 const SLOT_H = 90                          // height of the bottom slot row
 const HEADER_H = 60                        // top bar for score + timer
 const BALL_R = 32                          // ball radius
-const FALL_SPEED = 140                    // px/sec normal
+const FALL_SPEED = 90                    // px/sec normal
 const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
@@ -16,7 +16,7 @@ const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cyc
 
 // ── level config ───────────────────────────────────────────────────────────
 const LEVELS = {
-  2: { slotValues: [2, 3, 4, 5, 6, 7],          maxBall: 30,  minBall: 5  },
+  2: { slotValues: [2, 3, 5, 6, 7, 9],          maxBall: 30,  minBall: 5  },
   3: { slotValues: [3, 4, 5, 7, 11, 12],         maxBall: 60,  minBall: 9  },
   4: { slotValues: [2, 3, 4, 5, 7, 8, 9, 13],    maxBall: 100, minBall: 15 },
 }
