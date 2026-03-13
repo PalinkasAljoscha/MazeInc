@@ -21,7 +21,17 @@
     "multiplesCatcher": {
       "title": "Multiples Catcher",
       "description": "Catch falling balls in the right slot! Is the number a multiple of the slot number?"
+    },
+    "newWays": {
+      "title": "New Ways",
+      "description": "Navigate from corner to corner — but never repeat a sequence of moves!"
     }
+  },
+  "newWays": {
+    "won": "You made it! 🎉",
+    "movesLabel": "Moves",
+    "timeLabel": "Time",
+    "playAgain": "Play Again"
   },
   "multiplesCatcher": {
     "hud": {

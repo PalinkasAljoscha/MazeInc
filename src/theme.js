@@ -41,6 +41,11 @@ export const palette = {
 
   // ── Misc ──
   overlayBlack: '#000000',
+
+  // ── Board cells (New Ways game) ──
+  boardCellLight: '#f0d9b5',
+  boardCellDark:  '#b58863',
+  boardBlocked:   '#111120',
 }
 
 // Phaser uses 0xRRGGBB integers — derived from the palette strings above.

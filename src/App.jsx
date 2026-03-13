@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
+import NewWays, { meta as newWaysMeta } from './games/NewWays'
 
 const ALL_LEVELS = [1, 2, 3, 4, 5]
+
+// Map game id → React component (used when rendering the active game)
+const GAME_COMPONENTS = {
+  'multiples-catcher': MultiplesCatcher,
+  'new-ways': NewWays,
+}
 
 const GAMES = [
   {
@@ -14,6 +21,16 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: multiplesCatcherMeta.minLevel,
     maxLevel: multiplesCatcherMeta.maxLevel,
+  },
+  {
+    id: 'new-ways',
+    titleKey: 'games.newWays.title',
+    descKey: 'games.newWays.description',
+    emoji: '🗺️',
+    color: 'from-emerald-500 to-teal-600',
+    shadow: 'shadow-teal-300',
+    minLevel: newWaysMeta.minLevel,
+    maxLevel: newWaysMeta.maxLevel,
   },
 ]
 
@@ -117,7 +134,8 @@ export default function App() {
     setActiveLevel(level)
   }
 
-  if (activeGame === 'multiples-catcher') {
+  const GameComponent = activeGame ? GAME_COMPONENTS[activeGame] : null
+  if (GameComponent) {
     const game = GAMES.find((g) => g.id === activeGame)
     return (
       <div className="w-screen h-screen flex flex-col bg-gray-900">
@@ -137,11 +155,9 @@ export default function App() {
 
         {/* Game fills remaining space */}
         <div className="flex-1 min-h-0">
-          <MultiplesCatcher
+          <GameComponent
             level={activeLevel}
-            onComplete={(result) => {
-              console.log('Game complete', result)
-            }}
+            onComplete={(result) => console.log('Game complete', result)}
           />
         </div>
       </div>
