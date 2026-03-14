@@ -46,6 +46,10 @@ export const palette = {
   boardCellLight: '#f0d9b5',
   boardCellDark:  '#b58863',
   boardBlocked:   '#111120',
+
+  // ── Feed the Numbers game ──
+  hungryBorder:   '#c39bd3',   // light purple border for hungry ellipses
+  pipeBlue:       '#4a90d9',   // pipe tube color
 }
 
 // Phaser uses 0xRRGGBB integers — derived from the palette strings above.
@@ -68,4 +72,6 @@ export const phaser = {
   btnBlue:       toHex(palette.btnBlue),
   btnBlueHover:  toHex(palette.btnBlueHover),
   overlayBlack:  toHex(palette.overlayBlack),
+  hungryBorder:  toHex(palette.hungryBorder),
+  pipeBlue:      toHex(palette.pipeBlue),
 }

@@ -25,6 +25,10 @@
     "newWays": {
       "title": "New Ways",
       "description": "Navigate from corner to corner — but never repeat a sequence of moves!"
+    },
+    "feedTheNumbers": {
+      "title": "Feed the Numbers",
+      "description": "Shoot balls into the hungry numbers! Score bonus points when matching digits appear."
     }
   },
   "newWays": {
@@ -32,6 +36,24 @@
     "movesLabel": "Moves",
     "timeLabel": "Time",
     "playAgain": "Play Again"
+  },
+  "feedTheNumbers": {
+    "hud": {
+      "score": "Score: {{score}}",
+      "hint": "— shoot up to feed a hungry number —"
+    },
+    "controls": {
+      "shoot": "↑ Shoot"
+    },
+    "feedback": {
+      "doubleDigit": "+2 twin digits!",
+      "tripleDigit": "+6 triple digits! ✨"
+    },
+    "gameOver": {
+      "title": "Time's up! 🎉",
+      "scoreLabel": "Your score:",
+      "playAgain": "Play Again"
+    }
   },
   "multiplesCatcher": {
     "hud": {

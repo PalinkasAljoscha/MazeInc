@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
 import NewWays, { meta as newWaysMeta } from './games/NewWays'
+import FeedTheNumbers, { meta as feedTheNumbersMeta } from './games/FeedTheNumbers'
 
 const ALL_LEVELS = [1, 2, 3, 4, 5]
 
@@ -9,6 +10,7 @@ const ALL_LEVELS = [1, 2, 3, 4, 5]
 const GAME_COMPONENTS = {
   'multiples-catcher': MultiplesCatcher,
   'new-ways': NewWays,
+  'feed-the-numbers': FeedTheNumbers,
 }
 
 const GAMES = [
@@ -31,6 +33,16 @@ const GAMES = [
     shadow: 'shadow-teal-300',
     minLevel: newWaysMeta.minLevel,
     maxLevel: newWaysMeta.maxLevel,
+  },
+  {
+    id: 'feed-the-numbers',
+    titleKey: 'games.feedTheNumbers.title',
+    descKey: 'games.feedTheNumbers.description',
+    emoji: '🍽️',
+    color: 'from-rose-500 to-pink-600',
+    shadow: 'shadow-pink-300',
+    minLevel: feedTheNumbersMeta.minLevel,
+    maxLevel: feedTheNumbersMeta.maxLevel,
   },
 ]
 
