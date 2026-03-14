@@ -29,6 +29,10 @@
     "feedTheNumbers": {
       "title": "Feed the Numbers",
       "description": "Shoot balls into the hungry numbers! Score bonus points when matching digits appear."
+    },
+    "balance": {
+      "title": "Balance",
+      "description": "Stack numbered cubes. Balance left = right, or build an ascending sequence to clear the field!"
     }
   },
   "newWays": {
@@ -36,6 +40,29 @@
     "movesLabel": "Moves",
     "timeLabel": "Time",
     "playAgain": "Play Again"
+  },
+  "balance": {
+    "hud": {
+      "score": "Score: {{score}}",
+      "title": "Balance",
+      "left": "LEFT",
+      "right": "RIGHT",
+      "leftSum": "left Σ",
+      "rightSum": "right Σ",
+      "hint": "left = right  OR  strictly ascending sums → clear!"
+    },
+    "controls": {
+      "drop": "↓ Drop"
+    },
+    "feedback": {
+      "balanced": "⚖️ Balanced!",
+      "ascending": "📈 Ascending!"
+    },
+    "gameOver": {
+      "title": "Game Over!",
+      "scoreLabel": "Your score:",
+      "playAgain": "Play Again"
+    }
   },
   "feedTheNumbers": {
     "hud": {
