@@ -10,7 +10,10 @@ const BALL_R = 28
 const PIPE_CX = 50
 const PIPE_HALF_W = BALL_R + 8        // 36 — inner half-width of pipe tube
 
-const STACK_SIZE = 4
+const STACK_SIZE = 2                  // number of balls visible in the pipe (1–4)
+const HUNGRY_START_MIN = 50            // min starting value for each hungry number
+const HUNGRY_START_MAX = 90           // max starting value for each hungry number
+
 const STACK_TOP_Y = 205               // y center of topmost stack ball
 const STACK_SPACING = 62              // vertical gap between stack ball centers
 // stack y positions: 205, 267, 329, 391
@@ -26,8 +29,11 @@ const HUNGRY_RX = 76                  // ellipse half-width
 const HUNGRY_RY = 46                  // ellipse half-height
 
 const BALL_SPEED_RIGHT = 130          // px/sec — rightward roll
-const BALL_SHOOT_SPEED = 500          // px/sec — upward shot
-const GAME_DURATION = 60
+const BALL_SEND_SPEED = 500           // px/sec — upward when sent
+const GAME_DURATION = 120
+const SEND_BTN_Y = 515                // y-center of in-canvas Send button
+const SEND_BTN_W = 390
+const SEND_BTN_H = 56
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -83,17 +89,17 @@ export default class GameScene extends Phaser.Scene {
     this.movingBall = null      // {value, bg, txt, x, y, state:'right'|'up'}
 
     // Starting hungry numbers — small and distinct
-    const h1 = Phaser.Math.Between(1, 9)
+    const h1 = Phaser.Math.Between(HUNGRY_START_MIN, HUNGRY_START_MAX)
     let h2
-    do { h2 = Phaser.Math.Between(1, 9) } while (h2 === h1)
+    do { h2 = Phaser.Math.Between(HUNGRY_START_MIN, HUNGRY_START_MAX) } while (h2 === h1)
     this.hungryLeft = h1
     this.hungryRight = h2
 
     this._buildScene()
     this._buildStack()
 
-    // Space key to shoot
-    this.input.keyboard.on('keydown-SPACE', () => this.shootBall())
+    // Space key to send
+    this.input.keyboard.on('keydown-SPACE', () => this.sendBall())
 
     // Countdown timer
     this.timerEvent = this.time.addEvent({
@@ -168,6 +174,30 @@ export default class GameScene extends Phaser.Scene {
       i18n.t('feedTheNumbers.hud.hint'),
       { fontSize: '12px', fontFamily: 'Arial, sans-serif', color: palette.hintGray }
     ).setOrigin(0.5)
+
+    // In-canvas Send button (amber, centered below play area)
+    const bx = W / 2
+    const by = SEND_BTN_Y
+    this.sendBtnBg = this.add.graphics()
+    this.sendBtnBg.fillStyle(C.btnAmber, 1)
+    this.sendBtnBg.fillRoundedRect(bx - SEND_BTN_W / 2, by - SEND_BTN_H / 2, SEND_BTN_W, SEND_BTN_H, 20)
+
+    this.add.text(bx, by, i18n.t('feedTheNumbers.controls.send'), {
+      fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.white,
+    }).setOrigin(0.5)
+
+    this.sendBtnZone = this.add.zone(bx, by, SEND_BTN_W, SEND_BTN_H).setInteractive()
+    this.sendBtnZone.on('pointerdown', () => this.sendBall())
+    this.sendBtnZone.on('pointerover', () => {
+      this.sendBtnBg.clear()
+      this.sendBtnBg.fillStyle(C.btnAmberHover, 1)
+      this.sendBtnBg.fillRoundedRect(bx - SEND_BTN_W / 2, by - SEND_BTN_H / 2, SEND_BTN_W, SEND_BTN_H, 20)
+    })
+    this.sendBtnZone.on('pointerout', () => {
+      this.sendBtnBg.clear()
+      this.sendBtnBg.fillStyle(C.btnAmber, 1)
+      this.sendBtnBg.fillRoundedRect(bx - SEND_BTN_W / 2, by - SEND_BTN_H / 2, SEND_BTN_W, SEND_BTN_H, 20)
+    })
   }
 
   /** Draws a J-shaped pipe on the left border. */
@@ -284,8 +314,8 @@ export default class GameScene extends Phaser.Scene {
     this.stackBalls.unshift(newBall)
   }
 
-  // ── shoot control (Space key or touch button) ────────────────────────────────
-  shootBall() {
+  // ── send control (Space key or on-canvas button) ────────────────────────────
+  sendBall() {
     if (!this.movingBall || this.movingBall.state !== 'right' || this.isGameOver) return
     this.movingBall.state = 'up'
   }
@@ -307,7 +337,7 @@ export default class GameScene extends Phaser.Scene {
         this._endMovingBall(false, null)
       }
     } else if (ball.state === 'up') {
-      ball.y -= BALL_SHOOT_SPEED * dt
+      ball.y -= BALL_SEND_SPEED * dt
       ball.bg.setPosition(ball.x, ball.y)
       ball.txt.setPosition(ball.x, ball.y)
 
@@ -453,6 +483,8 @@ export default class GameScene extends Phaser.Scene {
       this.movingBall.txt.destroy()
       this.movingBall = null
     }
+
+    if (this.sendBtnZone) this.sendBtnZone.disableInteractive()
 
     const W = GAME_W
     const H = GAME_H

@@ -50,6 +50,8 @@ export const palette = {
   // ── Feed the Numbers game ──
   hungryBorder:   '#c39bd3',   // light purple border for hungry ellipses
   pipeBlue:       '#4a90d9',   // pipe tube color
+  btnAmber:       '#f59e0b',   // amber — Send button fill
+  btnAmberHover:  '#d97706',   // amber darker — Send button hover
 }
 
 // Phaser uses 0xRRGGBB integers — derived from the palette strings above.
@@ -74,4 +76,6 @@ export const phaser = {
   overlayBlack:  toHex(palette.overlayBlack),
   hungryBorder:  toHex(palette.hungryBorder),
   pipeBlue:      toHex(palette.pipeBlue),
+  btnAmber:      toHex(palette.btnAmber),
+  btnAmberHover: toHex(palette.btnAmberHover),
 }

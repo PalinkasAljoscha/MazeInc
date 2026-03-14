@@ -40,10 +40,10 @@
   "feedTheNumbers": {
     "hud": {
       "score": "Score: {{score}}",
-      "hint": "— shoot up to feed a hungry number —"
+      "hint": "— send a ball to feed a hungry number —"
     },
     "controls": {
-      "shoot": "↑ Shoot"
+      "send": "↑ Send"
     },
     "feedback": {
       "doubleDigit": "+2 twin digits!",
