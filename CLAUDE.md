@@ -87,6 +87,16 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 
 When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the game uses the speed registry value; omit it otherwise and the speed line is suppressed automatically.
 
+**Game-over popup (Time's up)** — all games with a timer must use the same popup layout:
+- Full-screen dark overlay (`C.overlayBlack`, alpha 0.75)
+- Panel: `320×280`, `C.gameHeader` fill, rounded `24`, centred at `(W/2, H/2)`
+- Title: `30px Arial Black`, `palette.scoreYellow`, at `H/2 - 95`
+- Score label: `20px Arial`, `palette.silverGray`, at `H/2 - 30`
+- Score value: `72px Arial Black`, `palette.correctGreen`, at `H/2 + 30`
+- Play Again button: rect `220×56` at `(W/2 - 110, H/2 + 90)`, rounded `16`, `C.btnBlue` / hover `C.btnBlueHover`; text `24px Arial Black` white at `(W/2, H/2 + 118)`; interactive zone same size
+- If a game needs an extra line (e.g. FeedTheNumbers "hungry numbers"), extend the panel height proportionally and shift the button down to keep the same internal spacing
+- The **Start New** button in the React header bar uses the same blue (`#3498db` / `#2980b9` hover) and `font-black` to stay visually consistent with the in-game Play Again button
+
 **Adding a new game:**
 1. Create `src/games/MyGame/index.jsx` (React wrapper + touch controls) and `GameScene.js` (Phaser scene with `LEVELS` config)
 2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it

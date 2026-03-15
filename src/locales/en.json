@@ -63,7 +63,7 @@
       "ascending": "📈 Ascending!"
     },
     "gameOver": {
-      "title": "Game Over!",
+      "title": "Time's up! 🎉",
       "scoreLabel": "Your score:",
       "playAgain": "Play Again"
     }
