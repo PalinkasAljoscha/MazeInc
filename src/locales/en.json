@@ -16,7 +16,8 @@
     "play": "Play →",
     "comingSoon": "More games coming soon!",
     "backButton": "← Home",
-    "speed": "fast"
+    "speed": "fast",
+    "speedLabel": "Speed"
   },
   "games": {
     "multiplesCatcher": {

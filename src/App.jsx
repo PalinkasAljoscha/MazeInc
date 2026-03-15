@@ -199,6 +199,10 @@ export default function App() {
           <div>
             <div className="text-white/60 text-xs font-bold leading-none">{t('app.name')}</div>
             <h1 className="text-white font-black text-xl leading-tight">{game.emoji} {t(game.titleKey)}</h1>
+            <div className="text-white/50 text-xs font-semibold leading-tight mt-0.5">
+              {t('levels.label')} {activeLevel}
+              {game.hasSpeed && ` · ${t('home.speedLabel')} ${activeSpeed}`}
+            </div>
           </div>
         </div>
 

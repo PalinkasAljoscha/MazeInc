@@ -19,7 +19,7 @@ const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const FAST_SPEED = 600        // px/sec when space/drop held
 const MOVE_COOLDOWN = 150     // ms between key-repeat steps
 const MIN_CUBE_NUM = -5       // inclusive lower bound for cube values
-const MAX_CUBE_NUM = 15       // inclusive upper bound for cube values
+const MAX_CUBE_NUM = 25       // inclusive upper bound for cube values
 
 // Y positions for the sum displays below the grid
 const COL_SUM_Y = GRID_BOTTOM_Y + 32                                 // 489
