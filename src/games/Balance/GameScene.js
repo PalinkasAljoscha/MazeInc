@@ -54,20 +54,22 @@ const HINT_Y = COLORS_BOTTOM_Y + 22                                  // 593
 function get_next_cube_number(difficultyLevel, columnSums, fieldCleared = false) {
   const P_A    = [0, 0.6, 0.4, 0.3, 0.2, 0.1][difficultyLevel] ?? 0.3
   const P_NEG  = [0, 0,   0,   0.05, 0.1, 0.12][difficultyLevel] ?? 0
+  const minVal = difficultyLevel < 3 ? 1 : MIN_CUBE_NUM   // no negatives below level 3
 
   // ── Generator B ──────────────────────────────────────────────────────────
   const generatorB = () => {
     if (Math.random() < P_NEG) {
-      // Negative branch — uniform over [MIN_CUBE_NUM, -1]
-      return Math.floor(Math.random() * (-MIN_CUBE_NUM)) + MIN_CUBE_NUM
+      // Negative branch — uniform over [minVal, -1]
+      return Math.floor(Math.random() * (-minVal)) + minVal
     }
-    // Positive branch — power-law bias toward small values
-    const alpha = (5 - difficultyLevel) / 2   // 2 at level 1 → 0 at level 5
+    // Positive branch — linear drop: weight(v) = 1 + (MAX_CUBE_NUM − v) * t
+    // t = (5 − level) / 4 → full slope at level 1, uniform (t=0) at level 5
+    const t = (5 - difficultyLevel) / 4
     const values  = []
     const weights = []
     for (let v = 1; v <= MAX_CUBE_NUM; v++) {
       values.push(v)
-      weights.push(alpha === 0 ? 1 : 1 / Math.pow(v, alpha))
+      weights.push(1 + (MAX_CUBE_NUM - v) * t)
     }
     const total = weights.reduce((a, b) => a + b, 0)
     let r = Math.random() * total
@@ -86,7 +88,7 @@ function get_next_cube_number(difficultyLevel, columnSums, fieldCleared = false)
   const rightTotal = columnSums.slice(COLS_PER_SIDE).reduce((a, b) => a + b, 0)
   const diff = leftTotal - rightTotal   // adding diff to right side balances;
                                         // adding -diff to left side balances
-  const inRange = v => v !== 0 && v >= MIN_CUBE_NUM && v <= MAX_CUBE_NUM
+  const inRange = v => v !== 0 && v >= minVal && v <= MAX_CUBE_NUM
   const posOk = inRange(diff)
   const negOk = inRange(-diff)
 
