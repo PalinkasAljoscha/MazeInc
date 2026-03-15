@@ -20,10 +20,10 @@ const MOVE_COOLDOWN = 150     // ms between key-repeat steps
 
 // Y positions for the sum displays below the grid
 const COL_SUM_Y = GRID_BOTTOM_Y + 32                                 // 489
-const SEP_LINE_Y = COL_SUM_Y + 18                                    // 507
-const SIDE_LABEL_Y = SEP_LINE_Y + 16                                 // 523
-const SIDE_SUM_Y = SIDE_LABEL_Y + 28                                 // 551
-const HINT_Y = SIDE_SUM_Y + 42                                       // 593
+const BRACE_Y = COL_SUM_Y + 22                                       // 511
+const SIDE_SUM_Y = BRACE_Y + 32                                      // 543
+const COLORS_BOTTOM_Y = SIDE_SUM_Y + 28                              // 571
+const HINT_Y = COLORS_BOTTOM_Y + 22                                  // 593
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -100,45 +100,23 @@ export default class GameScene extends Phaser.Scene {
     dg.lineStyle(2, C.divider, 1)
     dg.lineBetween(0, HEADER_H, W, HEADER_H)
 
-    // Grid half-backgrounds — slight colour difference left vs right
+    // Half-backgrounds — slight colour difference left vs right, stop before hint area
     const gBg = this.add.graphics()
     gBg.fillStyle(0x1c1c38, 1)
-    gBg.fillRect(GRID_OFFSET_X, GRID_TOP_Y, COLS_PER_SIDE * CELL_SIZE, GRID_ROWS * CELL_SIZE)
+    gBg.fillRect(0, HEADER_H, W / 2, COLORS_BOTTOM_Y - HEADER_H)
     gBg.fillStyle(0x1c2838, 1)
-    gBg.fillRect(GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE, GRID_TOP_Y, COLS_PER_SIDE * CELL_SIZE, GRID_ROWS * CELL_SIZE)
+    gBg.fillRect(W / 2, HEADER_H, W / 2, COLORS_BOTTOM_Y - HEADER_H)
 
     // Centre divider (stronger line between halves)
     const midX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE
     const cdg = this.add.graphics()
     cdg.lineStyle(3, 0xffffff, 0.25)
-    cdg.lineBetween(midX, GRID_TOP_Y, midX, GRID_BOTTOM_Y)
+    cdg.lineBetween(midX, HEADER_H, midX, COLORS_BOTTOM_Y)
 
-    // Grid lines
-    const gg = this.add.graphics()
-    gg.lineStyle(1, 0xffffff, 0.07)
-    for (let c = 0; c <= GRID_COLS; c++) {
-      const x = GRID_OFFSET_X + c * CELL_SIZE
-      gg.lineBetween(x, GRID_TOP_Y, x, GRID_BOTTOM_Y)
-    }
-    for (let r = 0; r <= GRID_ROWS; r++) {
-      const y = GRID_TOP_Y + r * CELL_SIZE
-      gg.lineBetween(GRID_OFFSET_X, y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, y)
-    }
-
-    // Ceiling warning line
-    const cg = this.add.graphics()
-    cg.lineStyle(2, C.wrongRed, 0.55)
-    cg.lineBetween(GRID_OFFSET_X, GRID_TOP_Y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, GRID_TOP_Y)
-
-    // LEFT / RIGHT side labels above the grid
-    const leftMidX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE / 2
-    const rightMidX = midX + COLS_PER_SIDE * CELL_SIZE / 2
-    this.add.text(leftMidX, GRID_TOP_Y - 18, i18n.t('balance.hud.left'), {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
-    }).setOrigin(0.5)
-    this.add.text(rightMidX, GRID_TOP_Y - 18, i18n.t('balance.hud.right'), {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
-    }).setOrigin(0.5)
+    // Thick border at the bottom of the play field
+    const fieldBase = this.add.graphics()
+    fieldBase.lineStyle(4, 0xffffff, 0.45)
+    fieldBase.lineBetween(GRID_OFFSET_X, GRID_BOTTOM_Y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, GRID_BOTTOM_Y)
   }
 
   // ── sum display row and side totals ──────────────────────────────────────────
@@ -154,35 +132,35 @@ export default class GameScene extends Phaser.Scene {
       this.colSumTexts.push(txt)
     }
 
-    // Separator under col sums
-    const sep = this.add.graphics()
-    sep.lineStyle(1, C.divider, 0.7)
-    sep.lineBetween(GRID_OFFSET_X, SEP_LINE_Y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, SEP_LINE_Y)
-
     const midX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE
     const leftMidX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE / 2
     const rightMidX = midX + COLS_PER_SIDE * CELL_SIZE / 2
 
-    // Left side label + value
-    this.add.text(leftMidX, SIDE_LABEL_Y, i18n.t('balance.hud.leftSum'), {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
-    }).setOrigin(0.5)
-    this.leftSumText = this.add.text(leftMidX, SIDE_SUM_Y, '0', {
-      fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
-    }).setOrigin(0.5)
+    // Thin separator between column sums and side totals
+    const sepGfx = this.add.graphics()
+    sepGfx.lineStyle(1, C.divider, 0.6)
+    sepGfx.lineBetween(GRID_OFFSET_X, BRACE_Y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, BRACE_Y)
 
-    // "=" / separator between side totals
+    // Left total: "Total:" label + dynamic number
+    this.add.text(leftMidX - 4, SIDE_SUM_Y, i18n.t('balance.hud.total'), {
+      fontSize: '12px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
+    }).setOrigin(1, 0.5)
+    this.leftSumText = this.add.text(leftMidX + 4, SIDE_SUM_Y, '0', {
+      fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
+    }).setOrigin(0, 0.5)
+
+    // "=" / "≠" balance symbol between side totals
     this.balanceSymbol = this.add.text(midX, SIDE_SUM_Y, '≠', {
       fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.hintGray,
     }).setOrigin(0.5)
 
-    // Right side label + value
-    this.add.text(rightMidX, SIDE_LABEL_Y, i18n.t('balance.hud.rightSum'), {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
-    }).setOrigin(0.5)
-    this.rightSumText = this.add.text(rightMidX, SIDE_SUM_Y, '0', {
-      fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
-    }).setOrigin(0.5)
+    // Right total: "Total:" label + dynamic number
+    this.add.text(rightMidX - 4, SIDE_SUM_Y, i18n.t('balance.hud.total'), {
+      fontSize: '12px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
+    }).setOrigin(1, 0.5)
+    this.rightSumText = this.add.text(rightMidX + 4, SIDE_SUM_Y, '0', {
+      fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
+    }).setOrigin(0, 0.5)
 
     // Hint
     this.add.text(W / 2, HINT_Y, i18n.t('balance.hud.hint'), {

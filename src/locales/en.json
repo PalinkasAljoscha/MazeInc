@@ -49,7 +49,8 @@
       "right": "RIGHT",
       "leftSum": "left Σ",
       "rightSum": "right Σ",
-      "hint": "left = right  OR  strictly ascending sums → clear!"
+      "total": "Total:",
+      "hint": "get equal big sums or ascending column sums!"
     },
     "controls": {
       "drop": "↓ Drop"
