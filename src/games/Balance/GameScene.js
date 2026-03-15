@@ -17,6 +17,8 @@ const FALL_START_Y = HEADER_H + CELL_SIZE / 2 + 5                   // 86
 const FALL_SPEED = 100        // px/sec normal drop
 const FAST_SPEED = 600        // px/sec when space/drop held
 const MOVE_COOLDOWN = 150     // ms between key-repeat steps
+const MIN_CUBE_NUM = -5       // inclusive lower bound for cube values
+const MAX_CUBE_NUM = 15       // inclusive upper bound for cube values
 
 // Y positions for the sum displays below the grid
 const COL_SUM_Y = GRID_BOTTOM_Y + 32                                 // 489
@@ -29,10 +31,69 @@ const HINT_Y = COLORS_BOTTOM_Y + 22                                  // 593
 
 /**
  * Returns the number for the next falling cube.
- * v1: random integer –5 … 15, arguments reserved for future use.
+ *
+ * Generator A (probability P by level: 1→0.6, 2→0.4, 3→0.3, 4→0.2, 5→0.1):
+ *   Produces a value that would balance left vs right totals if placed on the
+ *   matching side.  Both the positive and negative candidate are tried; if both
+ *   are in range, one is picked at random.  Falls back to B when neither fits.
+ *
+ * Generator B (always used when total field sum < 40, after a field clear, or
+ *   with probability 1–P otherwise):
+ *   - Negative numbers are sampled with a fixed probability by level:
+ *     1→0, 2→0, 3→0.05, 4→0.10, 5→0.12.
+ *   - Positive numbers use a power-law bias toward zero: weight = 1/v^α,
+ *     α = (5 − level) / 2  (heavy bias at level 1, uniform at level 5).
+ *   - Negative numbers (when selected) are drawn uniformly from
+ *     [MIN_CUBE_NUM, −1].
+ *   Zero is always excluded.
+ *
+ * @param {number}   difficultyLevel  1–5
+ * @param {number[]} columnSums       current sum of each column (length 8)
+ * @param {boolean}  [fieldCleared]   true for the first cube after a field clear
  */
-function get_next_cube_number(difficultyLevel, columnSums) { // eslint-disable-line no-unused-vars
-  return Math.floor(Math.random() * 21) - 5   // –5 to 15
+function get_next_cube_number(difficultyLevel, columnSums, fieldCleared = false) {
+  const P_A    = [0, 0.6, 0.4, 0.3, 0.2, 0.1][difficultyLevel] ?? 0.3
+  const P_NEG  = [0, 0,   0,   0.05, 0.1, 0.12][difficultyLevel] ?? 0
+
+  // ── Generator B ──────────────────────────────────────────────────────────
+  const generatorB = () => {
+    if (Math.random() < P_NEG) {
+      // Negative branch — uniform over [MIN_CUBE_NUM, -1]
+      return Math.floor(Math.random() * (-MIN_CUBE_NUM)) + MIN_CUBE_NUM
+    }
+    // Positive branch — power-law bias toward small values
+    const alpha = (5 - difficultyLevel) / 2   // 2 at level 1 → 0 at level 5
+    const values  = []
+    const weights = []
+    for (let v = 1; v <= MAX_CUBE_NUM; v++) {
+      values.push(v)
+      weights.push(alpha === 0 ? 1 : 1 / Math.pow(v, alpha))
+    }
+    const total = weights.reduce((a, b) => a + b, 0)
+    let r = Math.random() * total
+    for (let i = 0; i < values.length; i++) {
+      r -= weights[i]
+      if (r <= 0) return values[i]
+    }
+    return values[values.length - 1]
+  }
+
+  const totalFieldSum = columnSums.reduce((a, b) => a + b, 0)
+  if (fieldCleared || totalFieldSum < 40 || Math.random() >= P_A) return generatorB()
+
+  // ── Generator A ──────────────────────────────────────────────────────────
+  const leftTotal  = columnSums.slice(0, COLS_PER_SIDE).reduce((a, b) => a + b, 0)
+  const rightTotal = columnSums.slice(COLS_PER_SIDE).reduce((a, b) => a + b, 0)
+  const diff = leftTotal - rightTotal   // adding diff to right side balances;
+                                        // adding -diff to left side balances
+  const inRange = v => v !== 0 && v >= MIN_CUBE_NUM && v <= MAX_CUBE_NUM
+  const posOk = inRange(diff)
+  const negOk = inRange(-diff)
+
+  if (posOk && negOk) return Math.random() < 0.5 ? diff : -diff
+  if (posOk)          return diff
+  if (negOk)          return -diff
+  return generatorB()
 }
 
 /**
@@ -133,7 +194,8 @@ export default class GameScene extends Phaser.Scene {
     // stacks[col] = array of {value, bg, txt} from bottom (index 0) to top
     this.stacks = Array.from({ length: GRID_COLS }, () => [])
 
-    this.fallingCube = null   // {value, bg, txt, col, y, isFast}
+    this.fallingCube = null         // {value, bg, txt, col, y, isFast}
+    this.fieldJustCleared = false
 
     this._buildScene()
     this._buildSumDisplays()
@@ -243,23 +305,17 @@ export default class GameScene extends Phaser.Scene {
   spawnCube() {
     if (this.isGameOver) return
 
-    // Game over if no column has room
-    if (this.stacks.every(s => s.length >= GRID_ROWS)) {
+    // Pick a random column; game over immediately if it is full
+    const col = Math.floor(Math.random() * GRID_COLS)
+    if (this.stacks[col].length >= GRID_ROWS) {
       this.endGame()
       return
     }
 
-    // Start column: prefer middle, skip full columns
-    let col = Math.floor(GRID_COLS / 2)
-    if (this.stacks[col].length >= GRID_ROWS) {
-      for (let d = 1; d < GRID_COLS; d++) {
-        if (col - d >= 0 && this.stacks[col - d].length < GRID_ROWS) { col = col - d; break }
-        if (col + d < GRID_COLS && this.stacks[col + d].length < GRID_ROWS) { col = col + d; break }
-      }
-    }
-
     const colSums = this.stacks.map((_, c) => this._columnSum(c))
-    const value = get_next_cube_number(this.level, colSums)
+    const fieldCleared = this.fieldJustCleared
+    this.fieldJustCleared = false
+    const value = get_next_cube_number(this.level, colSums, fieldCleared)
     const { bg, txt } = this._createCubeGfx(colCenterX(col), FALL_START_Y, value)
     this.fallingCube = { value, bg, txt, col, y: FALL_START_Y, isFast: false }
   }
@@ -440,6 +496,7 @@ export default class GameScene extends Phaser.Scene {
       for (const cube of col) { cube.bg.destroy(); cube.txt.destroy() }
     }
     this.stacks = Array.from({ length: GRID_COLS }, () => [])
+    this.fieldJustCleared = true
     this._updateSumDisplays()
 
     // Green flash across the grid
