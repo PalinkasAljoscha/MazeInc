@@ -31,7 +31,7 @@ const HUNGRY_RY = 46                  // ellipse half-height
 const BALL_SPEED_RIGHT_BASE = 130     // px/sec at speed dial 4
 const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const BALL_SEND_SPEED = 500           // px/sec — upward when sent
-const GAME_DURATION = 12
+const GAME_DURATION = 90
 const SEND_BTN_Y = 515                // y-center of in-canvas Send button
 const SEND_BTN_W = 390
 const SEND_BTN_H = 56
