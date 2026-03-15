@@ -35,6 +35,77 @@ function get_next_cube_number(difficultyLevel, columnSums) { // eslint-disable-l
   return Math.floor(Math.random() * 21) - 5   // –5 to 15
 }
 
+/**
+ * Decides the display colour for each column sum.
+ * @param {number[]} sums  Ordered array of 8 column sums (index 0 = leftmost).
+ * @returns {{ grey: number[], green: number[], red: number[] }}
+ *   Each array contains the column indices that should receive that colour.
+ *
+ * Logic:
+ *   1. Build a position list [{pos, val}, …] from the sums.
+ *   2. Find the longest consecutive strictly-ascending run; on ties pick the
+ *      one whose first value is smallest. → green (primary).
+ *   3. Remove that run plus its immediate left/right neighbours from the list.
+ *      If the remainder contains a consecutive strictly-ascending run of ≥ 3
+ *      positions, add that run to green as well (secondary).
+ *   4. Every position not in green → grey.  No red is used.
+ */
+function set_column_sum_coloring(sums) {
+  // Build ordered position list
+  const items = sums.map((val, pos) => ({ pos, val }))
+
+  // Returns the longest consecutive strictly-ascending run in `list`
+  // (items must already be sorted by pos).
+  // Tiebreak: prefer the run whose first val is smallest.
+  function longestAscRun(list) {
+    if (list.length === 0) return []
+    let best = [list[0]]
+    let cur  = [list[0]]
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].pos === list[i - 1].pos + 1 && list[i].val > list[i - 1].val) {
+        cur.push(list[i])
+      } else {
+        cur = [list[i]]
+      }
+      if (cur.length > best.length ||
+          (cur.length === best.length && cur[0].val < best[0].val)) {
+        best = cur.slice()
+      }
+    }
+    return best
+  }
+
+  // Step 2 — primary green run (requires length >= 3)
+  const primary  = longestAscRun(items)
+  const greenSet = new Set()
+
+  if (primary.length >= 3) {
+    for (const i of primary) greenSet.add(i.pos)
+
+    // Step 3 — exclude primary run + immediate neighbours, then find secondary
+    const firstPos = primary[0].pos
+    const lastPos  = primary[primary.length - 1].pos
+    const excluded = new Set(greenSet)
+    if (firstPos > 0)               excluded.add(firstPos - 1)
+    if (lastPos  < sums.length - 1) excluded.add(lastPos  + 1)
+
+    const remaining = items.filter(i => !excluded.has(i.pos))
+    const secondary = longestAscRun(remaining)
+    const minDist   = Math.min(...secondary.map(s => Math.min(...primary.map(p => Math.abs(s.val - p.val)))))
+    if (secondary.length >= 3 && minDist >= 2) {
+      for (const i of secondary) greenSet.add(i.pos)
+    }
+  }
+
+  // Step 4 — everything else is grey
+  const result = { grey: [], green: [], red: [] }
+  for (let c = 0; c < sums.length; c++) {
+    if (greenSet.has(c)) result.green.push(c)
+    else                 result.grey.push(c)
+  }
+  return result
+}
+
 /** Screen x-center of a grid column. */
 function colCenterX(col) {
   return GRID_OFFSET_X + col * CELL_SIZE + CELL_SIZE / 2
@@ -312,13 +383,13 @@ export default class GameScene extends Phaser.Scene {
   _updateSumDisplays() {
     const sums = Array.from({ length: GRID_COLS }, (_, c) => this._columnSum(c))
 
+    const coloring = set_column_sum_coloring(sums)
     for (let c = 0; c < GRID_COLS; c++) {
-      const s = sums[c]
-      this.colSumTexts[c].setText(String(s))
-      this.colSumTexts[c].setColor(
-        s === 0 ? palette.hintGray : s > 0 ? palette.correctGreen : palette.wrongRed
-      )
+      this.colSumTexts[c].setText(String(sums[c]))
     }
+    for (const c of coloring.grey)  this.colSumTexts[c].setColor(palette.hintGray)
+    for (const c of coloring.green) this.colSumTexts[c].setColor(palette.correctGreen)
+    for (const c of coloring.red)   this.colSumTexts[c].setColor(palette.wrongRed)
 
     const lt = this._leftTotal()
     const rt = this._rightTotal()
