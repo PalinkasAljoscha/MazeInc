@@ -249,7 +249,7 @@ export default class GameScene extends Phaser.Scene {
     const midX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE
     const cdg = this.add.graphics()
     cdg.lineStyle(3, 0xffffff, 0.25)
-    cdg.lineBetween(midX, HEADER_H, midX, COLORS_BOTTOM_Y)
+    cdg.lineBetween(midX, HEADER_H, midX, GRID_BOTTOM_Y)
 
     // Thick border at the bottom of the play field
     const fieldBase = this.add.graphics()

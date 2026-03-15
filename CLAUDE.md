@@ -78,10 +78,19 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 
 **Level system** — each game defines a `LEVELS` object in `GameScene.js` keyed by level number. The React wrapper passes the chosen level into Phaser via `game.registry.set('level', level)`; the scene reads it back in `create()` with `this.registry.get('level')`.
 
+**Speed system** — games that support variable speed set `hasSpeed: true` in the `GAMES` array in `App.jsx`. The home-page tile shows a range slider (1–5, default 4) labelled "fast" at the right end. The selected value is passed as a `speed` prop to the game component, which pushes it to Phaser via `game.registry.set('speed', speed)`. In `GameScene.js`, read it in `create()` with `this.registry.get('speed') ?? 4` and apply the shared multiplier table `SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]` (index = dial value 1–5) to a `*_BASE` constant so that dial 4 always matches the original design speed.
+
+**Game header title** — the header bar shown during play (in `App.jsx`) displays three lines:
+1. App name `Maze Inc.` (tiny, dimmed)
+2. `{emoji} {game title}` (large, bold)
+3. `Level {n}` plus, if `game.hasSpeed`, ` · Speed {n}` (small, dimmed)
+
+When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the game uses the speed registry value; omit it otherwise and the speed line is suppressed automatically.
+
 **Adding a new game:**
 1. Create `src/games/MyGame/index.jsx` (React wrapper + touch controls) and `GameScene.js` (Phaser scene with `LEVELS` config)
-2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`
-3. Import meta and add an entry to the `GAMES` array in `App.jsx`
+2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
+3. Import meta and add an entry to the `GAMES` array in `App.jsx`; set `hasSpeed: true` if applicable
 4. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json`
 
 ---
