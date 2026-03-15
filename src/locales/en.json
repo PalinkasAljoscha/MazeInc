@@ -15,7 +15,8 @@
     "subtitle": "Pick a game and start playing!",
     "play": "Play →",
     "comingSoon": "More games coming soon!",
-    "backButton": "← Home"
+    "backButton": "← Home",
+    "speed": "fast"
   },
   "games": {
     "multiplesCatcher": {

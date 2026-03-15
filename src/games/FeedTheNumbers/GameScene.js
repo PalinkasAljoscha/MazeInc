@@ -28,7 +28,8 @@ const HUNGRY_Y = 112
 const HUNGRY_RX = 76                  // ellipse half-width
 const HUNGRY_RY = 46                  // ellipse half-height
 
-const BALL_SPEED_RIGHT = 130          // px/sec — rightward roll
+const BALL_SPEED_RIGHT_BASE = 130     // px/sec at speed dial 4
+const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const BALL_SEND_SPEED = 500           // px/sec — upward when sent
 const GAME_DURATION = 120
 const SEND_BTN_Y = 515                // y-center of in-canvas Send button
@@ -80,7 +81,9 @@ export default class GameScene extends Phaser.Scene {
   // ── create ──────────────────────────────────────────────────────────────────
   create() {
     const level = this.registry.get('level') ?? 2
+    const speed = this.registry.get('speed') ?? 4
     this.level = level
+    this.ballSpeedRight = BALL_SPEED_RIGHT_BASE * SPEED_DIAL[speed]
     this.score = 0
     this.timeLeft = GAME_DURATION
     this.isGameOver = false
@@ -328,7 +331,7 @@ export default class GameScene extends Phaser.Scene {
     const dt = delta / 1000
 
     if (ball.state === 'right') {
-      ball.x += BALL_SPEED_RIGHT * dt
+      ball.x += this.ballSpeedRight * dt
       ball.bg.setPosition(ball.x, ball.y)
       ball.txt.setPosition(ball.x, ball.y)
 

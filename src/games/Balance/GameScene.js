@@ -14,7 +14,8 @@ const GRID_OFFSET_X = (GAME_W - GRID_COLS * CELL_SIZE) / 2          // 32
 const GRID_TOP_Y = 145
 const GRID_BOTTOM_Y = GRID_TOP_Y + GRID_ROWS * CELL_SIZE             // 457
 const FALL_START_Y = HEADER_H + CELL_SIZE / 2 + 5                   // 86
-const FALL_SPEED = 100        // px/sec normal drop
+const FALL_SPEED_BASE = 100   // px/sec at speed dial 4
+const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const FAST_SPEED = 600        // px/sec when space/drop held
 const MOVE_COOLDOWN = 150     // ms between key-repeat steps
 const MIN_CUBE_NUM = -5       // inclusive lower bound for cube values
@@ -188,7 +189,9 @@ export default class GameScene extends Phaser.Scene {
   // ── create ──────────────────────────────────────────────────────────────────
   create() {
     const level = this.registry.get('level') ?? 2
+    const speed = this.registry.get('speed') ?? 4
     this.level = level
+    this.fallSpeed = FALL_SPEED_BASE * SPEED_DIAL[speed]
     this.score = 0
     this.isGameOver = false
     this.lastMoveTime = 0
@@ -359,7 +362,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.spaceKey.isDown) cube.isFast = true
 
-    cube.y += (cube.isFast ? FAST_SPEED : FALL_SPEED) * dt
+    cube.y += (cube.isFast ? FAST_SPEED : this.fallSpeed) * dt
 
     const landY = this._landY(cube.col)
     if (cube.y >= landY) {

@@ -3,7 +3,7 @@ import Phaser from 'phaser'
 import GameScene from './GameScene'
 import { palette } from '../../theme.js'
 
-export default function FeedTheNumbers({ level = 2, onComplete }) {
+export default function FeedTheNumbers({ level = 2, speed = 4, onComplete }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export default function FeedTheNumbers({ level = 2, onComplete }) {
 
     const game = new Phaser.Game(config)
     game.registry.set('level', level)
+    game.registry.set('speed', speed)
 
     game.events.on('gameComplete', ({ score }) => {
       if (onComplete) onComplete({ correct: true, score })

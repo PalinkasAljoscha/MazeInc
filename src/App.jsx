@@ -25,6 +25,7 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: multiplesCatcherMeta.minLevel,
     maxLevel: multiplesCatcherMeta.maxLevel,
+    hasSpeed: true,
   },
   {
     id: 'new-ways',
@@ -45,6 +46,7 @@ const GAMES = [
     shadow: 'shadow-blue-300',
     minLevel: balanceMeta.minLevel,
     maxLevel: balanceMeta.maxLevel,
+    hasSpeed: true,
   },
   {
     id: 'feed-the-numbers',
@@ -55,6 +57,7 @@ const GAMES = [
     shadow: 'shadow-pink-300',
     minLevel: feedTheNumbersMeta.minLevel,
     maxLevel: feedTheNumbersMeta.maxLevel,
+    hasSpeed: true,
   },
 ]
 
@@ -64,9 +67,14 @@ function HomePage({ onSelectGame }) {
   const [selectedLevels, setSelectedLevels] = useState(
     Object.fromEntries(GAMES.map((g) => [g.id, g.minLevel]))
   )
+  const [selectedSpeeds, setSelectedSpeeds] = useState(
+    Object.fromEntries(GAMES.filter((g) => g.hasSpeed).map((g) => [g.id, 4]))
+  )
 
   const setLevel = (gameId, lvl) =>
     setSelectedLevels((prev) => ({ ...prev, [gameId]: lvl }))
+  const setSpeed = (gameId, spd) =>
+    setSelectedSpeeds((prev) => ({ ...prev, [gameId]: spd }))
 
   return (
     <div className="w-screen h-screen flex flex-col items-center bg-gradient-to-b from-sky-400 to-blue-600 overflow-auto py-8 px-4">
@@ -129,12 +137,27 @@ function HomePage({ onSelectGame }) {
               })}
             </div>
 
-            <button
-              onClick={() => onSelectGame(game.id, selectedLevels[game.id])}
-              className="mt-4 bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg active:scale-95 transition-transform duration-100"
-            >
-              {t('home.play')}
-            </button>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <button
+                onClick={() => onSelectGame(game.id, selectedLevels[game.id], selectedSpeeds[game.id])}
+                className="bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg active:scale-95 transition-transform duration-100"
+              >
+                {t('home.play')}
+              </button>
+
+              {game.hasSpeed && (
+                <div className="flex items-center gap-2 pb-1">
+                  <input
+                    type="range"
+                    min="1" max="5" step="1"
+                    value={selectedSpeeds[game.id]}
+                    onChange={(e) => setSpeed(game.id, Number(e.target.value))}
+                    className="w-24 accent-white cursor-pointer"
+                  />
+                  <span className="text-white/70 text-xs font-bold">{t('home.speed')}</span>
+                </div>
+              )}
+            </div>
           </div>
         ))}
 
@@ -152,10 +175,12 @@ export default function App() {
   const { t } = useTranslation()
   const [activeGame, setActiveGame] = useState(null)
   const [activeLevel, setActiveLevel] = useState(null)
+  const [activeSpeed, setActiveSpeed] = useState(4)
 
-  function handleSelectGame(gameId, level) {
+  function handleSelectGame(gameId, level, speed = 4) {
     setActiveGame(gameId)
     setActiveLevel(level)
+    setActiveSpeed(speed)
   }
 
   const GameComponent = activeGame ? GAME_COMPONENTS[activeGame] : null
@@ -181,6 +206,7 @@ export default function App() {
         <div className="flex-1 min-h-0">
           <GameComponent
             level={activeLevel}
+            speed={activeSpeed}
             onComplete={(result) => console.log('Game complete', result)}
           />
         </div>

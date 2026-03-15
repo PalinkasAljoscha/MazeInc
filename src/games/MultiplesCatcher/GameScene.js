@@ -8,7 +8,8 @@ const GAME_H = 680
 const SLOT_H = 90                          // height of the bottom slot row
 const HEADER_H = 60                        // top bar for score + timer
 const BALL_R = 32                          // ball radius
-const FALL_SPEED = 90                    // px/sec normal
+const FALL_SPEED_BASE = 90               // px/sec at speed dial 4
+const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const FAST_SPEED = 600                     // px/sec when space / drop held
 const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
@@ -48,6 +49,8 @@ export default class GameScene extends Phaser.Scene {
 
     // ── read level config from registry ──
     const level = this.registry.get('level') ?? 2
+    const speed = this.registry.get('speed') ?? 4
+    this.fallSpeed = FALL_SPEED_BASE * SPEED_DIAL[speed]
     const levelCfg = LEVELS[level] ?? LEVELS[2]
     this.slotValues = levelCfg.slotValues
     this.numSlots   = this.slotValues.length
@@ -211,7 +214,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ── fall ──
-    const speed = this.isFast ? FAST_SPEED : FALL_SPEED
+    const speed = this.isFast ? FAST_SPEED : this.fallSpeed
     this.ballY += (speed * delta) / 1000
 
     // Sync graphics position
