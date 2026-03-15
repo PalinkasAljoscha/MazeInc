@@ -496,44 +496,44 @@ export default class GameScene extends Phaser.Scene {
 
     const panel = this.add.graphics()
     panel.fillStyle(C.gameHeader, 1)
-    panel.fillRoundedRect(W / 2 - 160, H / 2 - 140, 320, 280, 24)
+    panel.fillRoundedRect(W / 2 - 160, H / 2 - 155, 320, 310, 24)
 
-    this.add.text(W / 2, H / 2 - 95, i18n.t('feedTheNumbers.gameOver.title'), {
+    this.add.text(W / 2, H / 2 - 110, i18n.t('feedTheNumbers.gameOver.title'), {
       fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
     }).setOrigin(0.5)
 
-    this.add.text(W / 2, H / 2 - 30, i18n.t('feedTheNumbers.gameOver.scoreLabel'), {
+    this.add.text(W / 2, H / 2 - 48, i18n.t('feedTheNumbers.gameOver.scoreLabel'), {
       fontSize: '20px', fontFamily: 'Arial, sans-serif', color: palette.silverGray,
     }).setOrigin(0.5)
 
-    this.add.text(W / 2, H / 2 + 30, String(this.score), {
+    this.add.text(W / 2, H / 2 + 14, String(this.score), {
       fontSize: '72px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
     }).setOrigin(0.5)
 
     // Final hungry numbers display
-    this.add.text(W / 2, H / 2 + 95, `${this.hungryLeft}  |  ${this.hungryRight}`, {
+    this.add.text(W / 2, H / 2 + 82, `${this.hungryLeft}  |  ${this.hungryRight}`, {
       fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.silverGray,
     }).setOrigin(0.5)
 
     const btnBg = this.add.graphics()
     btnBg.fillStyle(C.btnBlue, 1)
-    btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 118, 220, 52, 16)
+    btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
 
-    this.add.text(W / 2, H / 2 + 144, i18n.t('feedTheNumbers.gameOver.playAgain'), {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.white,
+    this.add.text(W / 2, H / 2 + 135, i18n.t('feedTheNumbers.gameOver.playAgain'), {
+      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: palette.white,
     }).setOrigin(0.5)
 
-    const btnZone = this.add.zone(W / 2, H / 2 + 144, 220, 52).setInteractive()
+    const btnZone = this.add.zone(W / 2, H / 2 + 135, 220, 56).setInteractive()
     btnZone.on('pointerdown', () => this.scene.restart())
     btnZone.on('pointerover', () => {
       btnBg.clear()
       btnBg.fillStyle(C.btnBlueHover, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 118, 220, 52, 16)
+      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
     })
     btnZone.on('pointerout', () => {
       btnBg.clear()
       btnBg.fillStyle(C.btnBlue, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 118,220, 52, 16)
+      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
     })
 
     this.game.events.emit('gameComplete', { score: this.score })

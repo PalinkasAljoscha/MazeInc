@@ -176,6 +176,7 @@ export default function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [activeLevel, setActiveLevel] = useState(null)
   const [activeSpeed, setActiveSpeed] = useState(4)
+  const [gameKey, setGameKey] = useState(0)
 
   function handleSelectGame(gameId, level, speed = 4) {
     setActiveGame(gameId)
@@ -189,26 +190,46 @@ export default function App() {
     return (
       <div className="w-screen h-screen flex flex-col bg-gray-900">
         {/* Header bar */}
-        <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
-          <button
-            onClick={() => setActiveGame(null)}
-            className="text-white font-black text-lg bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-xl px-4 py-1 transition-colors"
-          >
-            {t('home.backButton')}
-          </button>
-          <div>
-            <div className="text-white/60 text-xs font-bold leading-none">{t('app.name')}</div>
-            <h1 className="text-white font-black text-xl leading-tight">{game.emoji} {t(game.titleKey)}</h1>
-            <div className="text-white/50 text-xs font-semibold leading-tight mt-0.5">
-              {t('levels.label')} {activeLevel}
-              {game.hasSpeed && ` · ${t('home.speedLabel')} ${activeSpeed}`}
+        <div className="flex items-center px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+          {/* Left: Home button + game info */}
+          <div className="flex items-center gap-3 flex-1">
+            <button
+              onClick={() => setActiveGame(null)}
+              className="text-white font-black text-lg bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-xl px-4 py-1 transition-colors shrink-0"
+            >
+              {t('home.backButton')}
+            </button>
+            <div>
+              <div className="text-white/60 text-xs font-bold leading-none">{t('app.name')}</div>
+              <h1 className="text-white font-black text-xl leading-tight">{game.emoji} {t(game.titleKey)}</h1>
+              <div className="text-white/50 text-xs font-semibold leading-tight mt-0.5">
+                {t('levels.label')} {activeLevel}
+                {game.hasSpeed && ` · ${t('home.speedLabel')} ${activeSpeed}`}
+              </div>
             </div>
           </div>
+
+          {/* Center: Start New button */}
+          <div className="flex justify-center flex-1">
+            <button
+              onClick={() => setGameKey((k) => k + 1)}
+              className="text-white font-black text-xl rounded-2xl px-6 py-2 transition-colors active:scale-95 transition-transform duration-100"
+              style={{ backgroundColor: '#3498db' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2980b9'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3498db'}
+            >
+              {t('home.startNew')}
+            </button>
+          </div>
+
+          {/* Right: spacer to keep center truly centered */}
+          <div className="flex-1" />
         </div>
 
         {/* Game fills remaining space */}
         <div className="flex-1 min-h-0">
           <GameComponent
+            key={gameKey}
             level={activeLevel}
             speed={activeSpeed}
             onComplete={(result) => console.log('Game complete', result)}

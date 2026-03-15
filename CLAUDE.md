@@ -80,10 +80,10 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 
 **Speed system** — games that support variable speed set `hasSpeed: true` in the `GAMES` array in `App.jsx`. The home-page tile shows a range slider (1–5, default 4) labelled "fast" at the right end. The selected value is passed as a `speed` prop to the game component, which pushes it to Phaser via `game.registry.set('speed', speed)`. In `GameScene.js`, read it in `create()` with `this.registry.get('speed') ?? 4` and apply the shared multiplier table `SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]` (index = dial value 1–5) to a `*_BASE` constant so that dial 4 always matches the original design speed.
 
-**Game header title** — the header bar shown during play (in `App.jsx`) displays three lines:
-1. App name `Maze Inc.` (tiny, dimmed)
-2. `{emoji} {game title}` (large, bold)
-3. `Level {n}` plus, if `game.hasSpeed`, ` · Speed {n}` (small, dimmed)
+**Game header bar** — the header bar shown during play (in `App.jsx`) is a three-column flex row:
+- **Left** — `← Home` button + three-line game info (app name tiny/dimmed, `{emoji} {title}` large/bold, `Level {n} · Speed {n}` small/dimmed)
+- **Center** — `Start New` button (indigo); clicking increments `gameKey` which is passed as `key` to the `GameComponent`, forcing React to unmount/remount it and restart the Phaser game from scratch
+- **Right** — empty `flex-1` spacer to keep the center column truly centered
 
 When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the game uses the speed registry value; omit it otherwise and the speed line is suppressed automatically.
 
