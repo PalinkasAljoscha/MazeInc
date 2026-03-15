@@ -20,6 +20,7 @@ const FAST_SPEED = 600        // px/sec when space/drop held
 const MOVE_COOLDOWN = 150     // ms between key-repeat steps
 const MIN_CUBE_NUM = -5       // inclusive lower bound for cube values
 const MAX_CUBE_NUM = 25       // inclusive upper bound for cube values
+const GAME_DURATION = 120     // seconds
 
 // Y positions for the sum displays below the grid
 const COL_SUM_Y = GRID_BOTTOM_Y + 32                                 // 489
@@ -201,12 +202,20 @@ export default class GameScene extends Phaser.Scene {
 
     this.fallingCube = null         // {value, bg, txt, col, y, isFast}
     this.fieldJustCleared = false
+    this.timeLeft = GAME_DURATION
 
     this._buildScene()
     this._buildSumDisplays()
 
     this.cursors = this.input.keyboard.createCursorKeys()
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+
+    this.timerEvent = this.time.addEvent({
+      delay: 1000,
+      callback: this.onTick,
+      callbackScope: this,
+      repeat: GAME_DURATION - 1,
+    })
 
     this.game.events.emit('sceneReady', this)
     this.time.delayedCall(400, this.spawnCube, [], this)
@@ -233,6 +242,12 @@ export default class GameScene extends Phaser.Scene {
       fontSize: '18px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
     }).setOrigin(0.5)
 
+    this.timerText = this.add.text(W - 16, HEADER_H / 2, String(GAME_DURATION), {
+      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: palette.timerLight,
+    }).setOrigin(1, 0.5)
+
+    this.add.text(W - 78, HEADER_H / 2, '⏱', { fontSize: '20px' }).setOrigin(0.5)
+
     // Header divider
     const dg = this.add.graphics()
     dg.lineStyle(2, C.divider, 1)
@@ -241,15 +256,15 @@ export default class GameScene extends Phaser.Scene {
     // Half-backgrounds — slight colour difference left vs right, stop before hint area
     const gBg = this.add.graphics()
     gBg.fillStyle(0x1c1c38, 1)
-    gBg.fillRect(0, HEADER_H, W / 2, COLORS_BOTTOM_Y - HEADER_H)
+    gBg.fillRect(0, GRID_TOP_Y, W / 2, COLORS_BOTTOM_Y - GRID_TOP_Y)
     gBg.fillStyle(0x1c2838, 1)
-    gBg.fillRect(W / 2, HEADER_H, W / 2, COLORS_BOTTOM_Y - HEADER_H)
+    gBg.fillRect(W / 2, GRID_TOP_Y, W / 2, COLORS_BOTTOM_Y - GRID_TOP_Y)
 
-    // Centre divider (stronger line between halves)
+    // Centre divider — only within the active grid area
     const midX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE
     const cdg = this.add.graphics()
     cdg.lineStyle(3, 0xffffff, 0.25)
-    cdg.lineBetween(midX, HEADER_H, midX, GRID_BOTTOM_Y)
+    cdg.lineBetween(midX, GRID_TOP_Y, midX, GRID_BOTTOM_Y)
 
     // Thick border at the bottom of the play field
     const fieldBase = this.add.graphics()
@@ -310,12 +325,8 @@ export default class GameScene extends Phaser.Scene {
   spawnCube() {
     if (this.isGameOver) return
 
-    // Pick a random column; game over immediately if it is full
+    // Pick a random column — overflow is handled visually in _landCube
     const col = Math.floor(Math.random() * GRID_COLS)
-    if (this.stacks[col].length >= GRID_ROWS) {
-      this.endGame()
-      return
-    }
 
     const colSums = this.stacks.map((_, c) => this._columnSum(c))
     const fieldCleared = this.fieldJustCleared
@@ -399,11 +410,18 @@ export default class GameScene extends Phaser.Scene {
     this.fallingCube = null
     const col = cube.col
 
-    // Game over: column already full
+    // Game over: column already full — keep cube visible, shake, then end
     if (this.stacks[col].length >= GRID_ROWS) {
-      cube.bg.destroy()
-      cube.txt.destroy()
-      this.endGame()
+      this.cameras.main.shake(300, 0.013)
+      const flash = this.add.graphics()
+      flash.fillStyle(C.wrongRed, 0.35)
+      flash.fillRect(colCenterX(col) - CELL_SIZE / 2, GRID_TOP_Y, CELL_SIZE, GRID_ROWS * CELL_SIZE)
+      this.time.delayedCall(450, () => {
+        cube.bg.destroy()
+        cube.txt.destroy()
+        flash.destroy()
+        this.endGame()
+      })
       return
     }
 
@@ -525,9 +543,23 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ── game over ────────────────────────────────────────────────────────────────
+  // ── timer tick ──────────────────────────────────────────────────────────────
+  onTick() {
+    this.timeLeft--
+    this.timerText.setText(String(this.timeLeft))
+    if (this.timeLeft <= 10) {
+      this.timerText.setStyle({ color: palette.wrongRed })
+    }
+    if (this.timeLeft <= 0) {
+      this.endGame()
+    }
+  }
+
   endGame() {
     if (this.isGameOver) return
     this.isGameOver = true
+
+    if (this.timerEvent) this.timerEvent.remove()
 
     if (this.fallingCube) {
       this.fallingCube.bg.destroy()

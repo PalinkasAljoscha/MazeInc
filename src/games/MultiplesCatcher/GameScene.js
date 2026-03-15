@@ -83,9 +83,9 @@ export default class GameScene extends Phaser.Scene {
       color: palette.timerLight,
     }).setOrigin(1, 0.5)
 
-    this.add.text(W / 2, HEADER_H / 2, '⏱', {
+    this.add.text(W - 78, HEADER_H / 2, '⏱', {
       fontSize: '22px',
-    }).setOrigin(0.5).setX(W - 52)
+    }).setOrigin(0.5)
 
     // ── divider ──
     const div = this.add.graphics()

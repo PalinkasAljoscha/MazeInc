@@ -140,7 +140,7 @@ export default class GameScene extends Phaser.Scene {
       { fontSize: '24px', fontFamily: 'Arial Black, Arial', color: palette.timerLight }
     ).setOrigin(1, 0.5)
 
-    this.add.text(W - 52, HEADER_H / 2, '⏱', { fontSize: '20px' }).setOrigin(0.5)
+    this.add.text(W - 78, HEADER_H / 2, '⏱', { fontSize: '20px' }).setOrigin(0.5)
 
     // Header divider
     const dg = this.add.graphics()
