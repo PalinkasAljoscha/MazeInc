@@ -4,7 +4,8 @@
       "Bash(git:*)",
       "Bash(cd \"C:/Users/Alj/CODING_2/math_trainer\" && npm run build 2>&1 | tail -30)",
       "Bash(cd \"C:/Users/Alj/CODING_2/math_trainer\" && npm run build 2>&1 | tail -15)",
-      "Bash(cd \"C:/Users/Alj/CODING_2/math_trainer\" && npm run build 2>&1 | tail -12)"
+      "Bash(cd \"C:/Users/Alj/CODING_2/math_trainer\" && npm run build 2>&1 | tail -12)",
+      "Bash(cd:*)"
     ]
   }
 }
