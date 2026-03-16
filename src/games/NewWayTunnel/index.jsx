@@ -21,19 +21,6 @@ function findRepeatSeq(s) {
   return null
 }
 
-// Check if no valid move remains from pos with current seq
-function checkGameOver(pos, seq) {
-  const [col, row] = pos
-  for (const dir of ['U', 'L', 'R']) {
-    const [dc, dr] = MOVE_DELTA[dir]
-    const nc = col + dc
-    const nr = row + dr
-    if (nc < 0 || nc >= BOARD_WIDTH || nr < 0) continue
-    if (!findRepeatSeq(seq + dir)) return false
-  }
-  return true
-}
-
 // Board (col, row) → SVG (x, y). viewOffset = bottom row currently visible.
 function toSvg(col, row, viewOffset) {
   return [col + 0.5, VISIBLE_ROWS - 1 - (row - viewOffset) + 0.5]
@@ -64,7 +51,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
   const [seq, setSeq] = useState('')
   const [history, setHistory] = useState([[0, 0]])
   const [maxRow, setMaxRow] = useState(0)            // score = height achieved
-  const [gameOver, setGameOver] = useState(false)
   const [flash, setFlash] = useState(null)           // { start, unitLen, proposedPos }
   const [playerViewOffset, setPlayerViewOffset] = useState(0)    // auto-follows player
   const [userScrollOffset, setUserScrollOffset] = useState(null) // null = follow player
@@ -81,7 +67,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
 
   // ── Move logic ───────────────────────────────────────────────────────────
   const tryMove = useCallback((dir) => {
-    if (gameOver) return
     const [dc, dr] = MOVE_DELTA[dir]
     const [col, row] = pos
     const nc = col + dc
@@ -117,12 +102,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     setMaxRow(newMaxRow)
     setPlayerViewOffset(newPlayerOffset)
     setUserScrollOffset(null)  // re-lock to player on every move
-
-    if (checkGameOver(newPos, newSeq)) {
-      setGameOver(true)
-      onComplete?.({ correct: false, score: newMaxRow })
-    }
-  }, [pos, seq, history, maxRow, gameOver, playerViewOffset, onComplete])
+  }, [pos, seq, history, maxRow, playerViewOffset])
 
   // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -153,7 +133,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     setSeq('')
     setHistory([[0, 0]])
     setMaxRow(0)
-    setGameOver(false)
     setFlash(null)
     setPlayerViewOffset(0)
     setUserScrollOffset(null)
@@ -305,7 +284,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
             })()}
 
             {/* ── Player (current position) ── */}
-            {!gameOver && (() => {
+            {(() => {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
                 <g style={{ pointerEvents: 'none' }}>
@@ -317,20 +296,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                     style={{ userSelect: 'none' }}
                   >♟</text>
                 </g>
-              )
-            })()}
-
-            {/* ── Game over: player becomes red ── */}
-            {gameOver && (() => {
-              const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
-              return (
-                <circle
-                  cx={cx} cy={cy} r={0.38}
-                  fill={palette.wrongRed}
-                  stroke={palette.white}
-                  strokeWidth={0.05}
-                  style={{ pointerEvents: 'none' }}
-                />
               )
             })()}
           </svg>
@@ -396,39 +361,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
         >→</button>
       </div>
 
-      {/* ── Game over overlay ── */}
-      {gameOver && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.72)' }}
-        >
-          <div
-            className="rounded-2xl text-center shadow-2xl"
-            style={{ background: palette.gameHeader, padding: '36px 52px', minWidth: 260 }}
-          >
-            <div className="text-4xl font-black mb-4" style={{ color: palette.scoreYellow }}>
-              {t('tunnel.gameOver.title')}
-            </div>
-            <div className="text-lg mb-1" style={{ color: palette.silverGray }}>
-              {t('tunnel.gameOver.heightLabel')}
-            </div>
-            <div className="text-6xl font-black mb-4" style={{ color: palette.correctGreen }}>
-              {maxRow}
-            </div>
-            <div className="text-sm mb-7" style={{ color: palette.silverGray }}>
-              {t('tunnel.gameOver.movesLabel')}:{' '}
-              <span className="font-black" style={{ color: palette.white }}>{seq.length}</span>
-            </div>
-            <button
-              onClick={reset}
-              className="rounded-xl px-8 py-3 text-xl font-black text-white transition-opacity hover:opacity-80 active:scale-95"
-              style={{ background: palette.btnBlue }}
-            >
-              {t('tunnel.gameOver.playAgain')}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
