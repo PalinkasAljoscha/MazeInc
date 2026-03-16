@@ -282,6 +282,12 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
             preserveAspectRatio="xMidYMid meet"
             overflow="hidden"
           >
+            <defs>
+              <clipPath id="tunnel-board-clip">
+                <rect x={0} y={0} width={BOARD_WIDTH} height={VISIBLE_ROWS} />
+              </clipPath>
+            </defs>
+
             {/* ── Board cells ── */}
             {Array.from({ length: VISIBLE_ROWS }, (_, svgRowIdx) => {
               const boardRow = viewOffset + VISIBLE_ROWS - 1 - svgRowIdx
@@ -302,7 +308,8 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               })
             })}
 
-            {/* ── Path lines + arrowheads ── */}
+            {/* ── Path lines, arrowheads, dots — clipped to board area ── */}
+            <g clipPath="url(#tunnel-board-clip)">
             {displayHistory.length > 1 && (() => {
               const offsets = computeLateralOffsets(displayHistory)
               return displayHistory.slice(0, -1).map((from, i) => {
@@ -354,6 +361,8 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               )
             })}
 
+            </g>{/* end clip */}
+
             {/* ── Start marker at (0, 0) ── */}
             {(() => {
               const [sx, sy] = toSvg(0, 0, viewOffset)
@@ -374,7 +383,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
                 <text
-                  x={cx + 0.35} y={cy - 0.28}
+                  x={cx + 0.30} y={cy - 0.10}
                   textAnchor="middle" dominantBaseline="auto"
                   fontSize={0.54}
                   transform={`rotate(-45, ${cx}, ${cy})`}
