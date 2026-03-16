@@ -26,6 +26,54 @@ function toSvg(col, row, viewOffset) {
   return [col + 0.5, VISIBLE_ROWS - 1 - (row - viewOffset) + 0.5]
 }
 
+// ── Lateral-segment Y-offsets ─────────────────────────────────────────────────
+// Lateral moves (L/R) at the same board row share an identical SVG y-coordinate
+// and would overlap. We spread them apart vertically so each is legible.
+// At most 3 laterals can occur at the same row (RLR or LRL — more is a square).
+const LATERAL_SPREAD = 0.18  // SVG units between parallel lateral lines
+
+function computeLateralOffsets(history) {
+  const n = history.length - 1
+  const offsets = new Array(n).fill(0)
+  // collect lateral segment indices grouped by board row
+  const byRow = {}
+  for (let i = 0; i < n; i++) {
+    const [, r1] = history[i]
+    const [, r2] = history[i + 1]
+    if (r1 === r2) {           // same row → lateral move
+      ;(byRow[r1] = byRow[r1] || []).push(i)
+    }
+  }
+  for (const segs of Object.values(byRow)) {
+    if (segs.length === 2) {
+      offsets[segs[0]] = -LATERAL_SPREAD / 2
+      offsets[segs[1]] = +LATERAL_SPREAD / 2
+    } else if (segs.length >= 3) {
+      offsets[segs[0]] = -LATERAL_SPREAD
+      offsets[segs[1]] =  0
+      offsets[segs[2]] = +LATERAL_SPREAD
+    }
+    // length === 1: offset stays 0
+  }
+  return offsets
+}
+
+// ── Arrowhead helper ──────────────────────────────────────────────────────────
+// Returns SVG polygon `points` string for a small filled arrow tip at fraction t
+// along the segment (x1,y1)→(x2,y2). Returns null for degenerate segments.
+function arrowHeadPoints(x1, y1, x2, y2, t = 0.62) {
+  const dx = x2 - x1, dy = y2 - y1
+  const len = Math.sqrt(dx * dx + dy * dy)
+  if (len < 0.01) return null
+  const ux = dx / len, uy = dy / len   // unit direction
+  const px = -uy,     py = ux          // perpendicular
+  const L = 0.10, W = 0.058            // arrow length & half-width
+  const tx = x1 + t * dx, ty = y1 + t * dy  // tip
+  const b1x = tx - ux * L + px * W,  b1y = ty - uy * L + py * W
+  const b2x = tx - ux * L - px * W,  b2y = ty - uy * L - py * W
+  return `${tx.toFixed(3)},${ty.toFixed(3)} ${b1x.toFixed(3)},${b1y.toFixed(3)} ${b2x.toFixed(3)},${b2y.toFixed(3)}`
+}
+
 // ── Path color helpers (identical to New Ways) ────────────────────────────────
 function segColor(i, flash) {
   if (!flash) return palette.objBasicBlue
@@ -229,24 +277,34 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               })
             })}
 
-            {/* ── Path lines ── */}
-            {displayHistory.length > 1 && displayHistory.slice(0, -1).map((from, i) => {
-              const to = displayHistory[i + 1]
-              const [x1, y1] = toSvg(from[0], from[1], viewOffset)
-              const [x2, y2] = toSvg(to[0], to[1], viewOffset)
-              const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
-              return (
-                <line
-                  key={`seg-${i}`}
-                  x1={x1} y1={y1} x2={x2} y2={y2}
-                  stroke={segColor(i, flash)}
-                  strokeWidth={flash ? 0.16 : 0.11}
-                  strokeLinecap="round"
-                  opacity={flash ? (inRepeat ? 1 : 0.28) : 0.85}
-                  style={{ pointerEvents: 'none' }}
-                />
-              )
-            })}
+            {/* ── Path lines + arrowheads ── */}
+            {displayHistory.length > 1 && (() => {
+              const offsets = computeLateralOffsets(displayHistory)
+              return displayHistory.slice(0, -1).map((from, i) => {
+                const to = displayHistory[i + 1]
+                const yOff = offsets[i]
+                const [x1, y1b] = toSvg(from[0], from[1], viewOffset)
+                const [x2, y2b] = toSvg(to[0], to[1], viewOffset)
+                const y1 = y1b + yOff, y2 = y2b + yOff
+                const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
+                const color   = segColor(i, flash)
+                const sw      = flash ? 0.16 : 0.11
+                const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
+                const arrowPts = arrowHeadPoints(x1, y1, x2, y2)
+                return (
+                  <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
+                    <line
+                      x1={x1} y1={y1} x2={x2} y2={y2}
+                      stroke={color} strokeWidth={sw}
+                      strokeLinecap="round" opacity={opacity}
+                    />
+                    {arrowPts && (
+                      <polygon points={arrowPts} fill={color} opacity={opacity} />
+                    )}
+                  </g>
+                )
+              })
+            })()}
 
             {/* ── Path dots at visited nodes (skip index 0 = start) ── */}
             {displayHistory.slice(1).map(([c, r], idx) => {
