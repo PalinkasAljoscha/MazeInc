@@ -291,8 +291,8 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                 const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
                 // Line runs from 10 % to 95 % of the segment (leaves room at
                 // both ends so crowded nodes stay readable)
-                const lx1 = x1 + 0.10 * (x2 - x1),  ly1 = y1 + 0.10 * (y2 - y1)
-                const lx2 = x1 + 0.95 * (x2 - x1),  ly2 = y1 + 0.95 * (y2 - y1)
+                const lx1 = x1 + 0.20 * (x2 - x1),  ly1 = y1 + 0.20 * (y2 - y1)
+                const lx2 = x1 + 0.85 * (x2 - x1),  ly2 = y1 + 0.85 * (y2 - y1)
                 const arrPts = arrowHead(x1, y1, x2, y2)
                 return (
                   <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
