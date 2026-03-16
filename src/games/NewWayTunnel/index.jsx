@@ -376,7 +376,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
                 <text
-                  x={cx} y={cy}
+                  x={cx} y={cy - 0.18}
                   textAnchor="middle" dominantBaseline="auto"
                   fontSize={0.54}
                   transform={`rotate(-45, ${cx}, ${cy})`}
