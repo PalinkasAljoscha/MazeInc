@@ -339,8 +339,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
             {/* ── Path dots at visited nodes (skip index 0 = start) ── */}
             {displayHistory.slice(1).map(([c, r], idx) => {
               const i = idx + 1
-              const isCurrentPlayer = !flash && i === displayHistory.length - 1
-              if (isCurrentPlayer) return null
               const isProposed = flash && i === displayHistory.length - 1
               const [cx, cy] = toSvg(c, r, viewOffset)
               const inRepeat = flash && i >= flash.start && i <= flash.start + 2 * flash.unitLen
@@ -376,7 +374,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
                 <text
-                  x={cx + 0.25} y={cy - 0.28}
+                  x={cx + 0.35} y={cy - 0.28}
                   textAnchor="middle" dominantBaseline="auto"
                   fontSize={0.54}
                   transform={`rotate(-45, ${cx}, ${cy})`}
