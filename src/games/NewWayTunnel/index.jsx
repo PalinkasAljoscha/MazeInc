@@ -46,12 +46,12 @@ function computeLateralOffsets(history) {
   }
   for (const segs of Object.values(byRow)) {
     if (segs.length === 2) {
-      offsets[segs[0]] = -LATERAL_SPREAD / 2
-      offsets[segs[1]] = +LATERAL_SPREAD / 2
+      offsets[segs[0]] = +LATERAL_SPREAD / 2   // earlier → lower on screen
+      offsets[segs[1]] = -LATERAL_SPREAD / 2   // later   → higher on screen (on top)
     } else if (segs.length >= 3) {
-      offsets[segs[0]] = -LATERAL_SPREAD
+      offsets[segs[0]] = +LATERAL_SPREAD       // earliest → lowest
       offsets[segs[1]] =  0
-      offsets[segs[2]] = +LATERAL_SPREAD
+      offsets[segs[2]] = -LATERAL_SPREAD       // latest   → highest (on top)
     }
     // length === 1: offset stays 0
   }
