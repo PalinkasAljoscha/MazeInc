@@ -292,8 +292,9 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                 // Line runs from 10 % to 95 % of the segment (leaves room at
                 // both ends so crowded nodes stay readable)
                 const lx1 = x1 + 0.20 * (x2 - x1),  ly1 = y1 + 0.20 * (y2 - y1)
-                const lx2 = x1 + 0.85 * (x2 - x1),  ly2 = y1 + 0.85 * (y2 - y1)
-                const arrPts = arrowHead(x1, y1, lx2, ly2)
+                const lx2 = x1 + 0.68 * (x2 - x1),  ly2 = y1 + 0.68 * (y2 - y1)
+                const atx  = x1 + 0.85 * (x2 - x1),  aty  = y1 + 0.85 * (y2 - y1)
+                const arrPts = arrowHead(x1, y1, atx, aty)
                 return (
                   <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
                     <line
