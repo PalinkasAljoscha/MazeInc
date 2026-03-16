@@ -378,7 +378,8 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                 <text
                   x={cx} y={cy}
                   textAnchor="middle" dominantBaseline="auto"
-                  fontSize={0.30}
+                  fontSize={0.54}
+                  transform={`rotate(-45, ${cx}, ${cy})`}
                   style={{ userSelect: 'none', pointerEvents: 'none' }}
                 >🚀</text>
               )
