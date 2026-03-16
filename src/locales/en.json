@@ -36,6 +36,22 @@
     "balance": {
       "title": "Balance",
       "description": "Stack numbered cubes. Balance left = right, or build an ascending sequence to clear the field!"
+    },
+    "tunnel": {
+      "title": "New Way — The Tunnel",
+      "description": "Climb as high as you can — but never repeat a sequence of moves!"
+    }
+  },
+  "tunnel": {
+    "hud": {
+      "height": "Height",
+      "moves": "Moves"
+    },
+    "gameOver": {
+      "title": "Blocked! 🧱",
+      "heightLabel": "Height reached",
+      "movesLabel": "Moves",
+      "playAgain": "Play Again"
     }
   },
   "newWays": {

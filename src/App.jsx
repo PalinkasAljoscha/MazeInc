@@ -4,6 +4,7 @@ import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/Multiple
 import NewWays, { meta as newWaysMeta } from './games/NewWays'
 import FeedTheNumbers, { meta as feedTheNumbersMeta } from './games/FeedTheNumbers'
 import Balance, { meta as balanceMeta } from './games/Balance'
+import NewWayTunnel, { meta as tunnelMeta } from './games/NewWayTunnel'
 
 const ALL_LEVELS = [1, 2, 3, 4, 5]
 
@@ -13,6 +14,7 @@ const GAME_COMPONENTS = {
   'new-ways': NewWays,
   'feed-the-numbers': FeedTheNumbers,
   'balance': Balance,
+  'tunnel': NewWayTunnel,
 }
 
 const GAMES = [
@@ -58,6 +60,16 @@ const GAMES = [
     minLevel: feedTheNumbersMeta.minLevel,
     maxLevel: feedTheNumbersMeta.maxLevel,
     hasSpeed: true,
+  },
+  {
+    id: 'tunnel',
+    titleKey: 'games.tunnel.title',
+    descKey: 'games.tunnel.description',
+    emoji: '🚇',
+    color: 'from-sky-600 to-indigo-700',
+    shadow: 'shadow-indigo-300',
+    minLevel: tunnelMeta.minLevel,
+    maxLevel: tunnelMeta.maxLevel,
   },
 ]
 
