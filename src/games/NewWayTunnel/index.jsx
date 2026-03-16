@@ -151,6 +151,24 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     setUserScrollOffset(null)  // re-lock to player on every move
   }, [pos, seq, history, maxRow, playerViewOffset])
 
+  // ── Undo ──────────────────────────────────────────────────────────────────
+  const undo = useCallback(() => {
+    if (history.length <= 1) return
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    const newHistory = history.slice(0, -1)
+    const newPos     = newHistory[newHistory.length - 1]
+    const newSeq     = seq.slice(0, -1)
+    const newMaxRow  = Math.max(...newHistory.map(([, r]) => r))
+    const [, newRow] = newPos
+    setFlash(null)
+    setPos(newPos)
+    setSeq(newSeq)
+    setHistory(newHistory)
+    setMaxRow(newMaxRow)
+    setUserScrollOffset(null)
+    setPlayerViewOffset(prev => (newRow < prev ? Math.max(0, newRow) : prev))
+  }, [history, seq])
+
   // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const keyMap = { ArrowUp: 'U', ArrowLeft: 'L', ArrowRight: 'R' }
@@ -173,24 +191,6 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     const dir = dc === 1 ? 'R' : dc === -1 ? 'L' : 'U'
     tryMove(dir)
   }, [pos, tryMove])
-
-  // ── Undo ──────────────────────────────────────────────────────────────────
-  const undo = useCallback(() => {
-    if (history.length <= 1) return
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-    const newHistory = history.slice(0, -1)
-    const newPos     = newHistory[newHistory.length - 1]
-    const newSeq     = seq.slice(0, -1)
-    const newMaxRow  = Math.max(...newHistory.map(([, r]) => r))
-    const [, newRow] = newPos
-    setFlash(null)
-    setPos(newPos)
-    setSeq(newSeq)
-    setHistory(newHistory)
-    setMaxRow(newMaxRow)
-    setUserScrollOffset(null)
-    setPlayerViewOffset(prev => (newRow < prev ? Math.max(0, newRow) : prev))
-  }, [history, seq])
 
   // ── Reset ─────────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
