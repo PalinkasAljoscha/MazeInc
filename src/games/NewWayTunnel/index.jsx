@@ -375,15 +375,12 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
             {(() => {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
-                <g style={{ pointerEvents: 'none' }}>
-                  <circle cx={cx} cy={cy} r={0.36} fill={palette.objBasicBlue} stroke={palette.white} strokeWidth={0.05} />
-                  <text
-                    x={cx} y={cy}
-                    textAnchor="middle" dominantBaseline="central"
-                    fontSize={0.38}
-                    style={{ userSelect: 'none' }}
-                  >♟</text>
-                </g>
+                <text
+                  x={cx} y={cy}
+                  textAnchor="middle" dominantBaseline="auto"
+                  fontSize={0.30}
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >🚀</text>
               )
             })()}
           </svg>
