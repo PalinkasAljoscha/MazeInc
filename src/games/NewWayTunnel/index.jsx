@@ -59,21 +59,18 @@ function computeLateralOffsets(history) {
 }
 
 // ── Arrowhead helper ──────────────────────────────────────────────────────────
-// Returns the three points [leftWing, tip, rightWing] of a classical open
-// chevron arrowhead placed at the END of segment (x1,y1)→(x2,y2).
-// The tip sits exactly at (x2,y2). Returns null for degenerate segments.
+// Returns SVG polygon `points` string for a filled triangle arrowhead whose
+// tip sits exactly at (x2,y2). Returns null for degenerate segments.
 function arrowHead(x1, y1, x2, y2) {
   const dx = x2 - x1, dy = y2 - y1
   const len = Math.sqrt(dx * dx + dy * dy)
   if (len < 0.01) return null
   const ux = dx / len, uy = dy / len   // unit direction
   const px = -uy,     py = ux          // perpendicular
-  const L = 0.14, W = 0.10             // back-length & half-spread (wider than line)
-  return [
-    [x2 - ux * L + px * W,  y2 - uy * L + py * W],  // left wing
-    [x2, y2],                                          // tip
-    [x2 - ux * L - px * W,  y2 - uy * L - py * W],  // right wing
-  ]
+  const L = 0.14, W = 0.10             // back-length & half-spread
+  const lx = x2 - ux * L + px * W,  ly = y2 - uy * L + py * W
+  const rx = x2 - ux * L - px * W,  ry = y2 - uy * L - py * W
+  return `${x2.toFixed(3)},${y2.toFixed(3)} ${lx.toFixed(3)},${ly.toFixed(3)} ${rx.toFixed(3)},${ry.toFixed(3)}`
 }
 
 // ── Path color helpers (identical to New Ways) ────────────────────────────────
@@ -290,29 +287,22 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                 const y1 = y1b + yOff, y2 = y2b + yOff
                 const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
                 const color   = segColor(i, flash)
-                const sw      = flash ? 0.08 : 0.055   // 50 % of previous thickness
+                const sw      = flash ? 0.08 : 0.055
                 const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
-                const arr     = arrowHead(x1, y1, x2, y2)
+                // Line runs from 10 % to 95 % of the segment (leaves room at
+                // both ends so crowded nodes stay readable)
+                const lx1 = x1 + 0.10 * (x2 - x1),  ly1 = y1 + 0.10 * (y2 - y1)
+                const lx2 = x1 + 0.95 * (x2 - x1),  ly2 = y1 + 0.95 * (y2 - y1)
+                const arrPts = arrowHead(x1, y1, x2, y2)
                 return (
                   <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
                     <line
-                      x1={x1} y1={y1} x2={x2} y2={y2}
+                      x1={lx1} y1={ly1} x2={lx2} y2={ly2}
                       stroke={color} strokeWidth={sw}
                       strokeLinecap="round" opacity={opacity}
                     />
-                    {arr && (
-                      <>
-                        <line
-                          x1={arr[0][0]} y1={arr[0][1]} x2={arr[1][0]} y2={arr[1][1]}
-                          stroke={color} strokeWidth={sw}
-                          strokeLinecap="round" opacity={opacity}
-                        />
-                        <line
-                          x1={arr[2][0]} y1={arr[2][1]} x2={arr[1][0]} y2={arr[1][1]}
-                          stroke={color} strokeWidth={sw}
-                          strokeLinecap="round" opacity={opacity}
-                        />
-                      </>
+                    {arrPts && (
+                      <polygon points={arrPts} fill={color} opacity={opacity} />
                     )}
                   </g>
                 )
