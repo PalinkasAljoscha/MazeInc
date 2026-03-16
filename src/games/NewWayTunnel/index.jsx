@@ -59,19 +59,21 @@ function computeLateralOffsets(history) {
 }
 
 // ── Arrowhead helper ──────────────────────────────────────────────────────────
-// Returns SVG polygon `points` string for a small filled arrow tip at fraction t
-// along the segment (x1,y1)→(x2,y2). Returns null for degenerate segments.
-function arrowHeadPoints(x1, y1, x2, y2, t = 0.62) {
+// Returns the three points [leftWing, tip, rightWing] of a classical open
+// chevron arrowhead placed at the END of segment (x1,y1)→(x2,y2).
+// The tip sits exactly at (x2,y2). Returns null for degenerate segments.
+function arrowHead(x1, y1, x2, y2) {
   const dx = x2 - x1, dy = y2 - y1
   const len = Math.sqrt(dx * dx + dy * dy)
   if (len < 0.01) return null
   const ux = dx / len, uy = dy / len   // unit direction
   const px = -uy,     py = ux          // perpendicular
-  const L = 0.10, W = 0.058            // arrow length & half-width
-  const tx = x1 + t * dx, ty = y1 + t * dy  // tip
-  const b1x = tx - ux * L + px * W,  b1y = ty - uy * L + py * W
-  const b2x = tx - ux * L - px * W,  b2y = ty - uy * L - py * W
-  return `${tx.toFixed(3)},${ty.toFixed(3)} ${b1x.toFixed(3)},${b1y.toFixed(3)} ${b2x.toFixed(3)},${b2y.toFixed(3)}`
+  const L = 0.14, W = 0.10             // back-length & half-spread (wider than line)
+  return [
+    [x2 - ux * L + px * W,  y2 - uy * L + py * W],  // left wing
+    [x2, y2],                                          // tip
+    [x2 - ux * L - px * W,  y2 - uy * L - py * W],  // right wing
+  ]
 }
 
 // ── Path color helpers (identical to New Ways) ────────────────────────────────
@@ -288,9 +290,9 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                 const y1 = y1b + yOff, y2 = y2b + yOff
                 const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
                 const color   = segColor(i, flash)
-                const sw      = flash ? 0.16 : 0.11
+                const sw      = flash ? 0.08 : 0.055   // 50 % of previous thickness
                 const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
-                const arrowPts = arrowHeadPoints(x1, y1, x2, y2)
+                const arr     = arrowHead(x1, y1, x2, y2)
                 return (
                   <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
                     <line
@@ -298,8 +300,19 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
                       stroke={color} strokeWidth={sw}
                       strokeLinecap="round" opacity={opacity}
                     />
-                    {arrowPts && (
-                      <polygon points={arrowPts} fill={color} opacity={opacity} />
+                    {arr && (
+                      <>
+                        <line
+                          x1={arr[0][0]} y1={arr[0][1]} x2={arr[1][0]} y2={arr[1][1]}
+                          stroke={color} strokeWidth={sw}
+                          strokeLinecap="round" opacity={opacity}
+                        />
+                        <line
+                          x1={arr[2][0]} y1={arr[2][1]} x2={arr[1][0]} y2={arr[1][1]}
+                          stroke={color} strokeWidth={sw}
+                          strokeLinecap="round" opacity={opacity}
+                        />
+                      </>
                     )}
                   </g>
                 )
