@@ -45,7 +45,8 @@
   "tunnel": {
     "hud": {
       "height": "Height",
-      "moves": "Moves"
+      "moves": "Moves",
+      "ratio": "H/M %"
     },
     "gameOver": {
       "title": "Blocked! 🧱",

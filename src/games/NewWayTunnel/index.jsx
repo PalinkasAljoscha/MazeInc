@@ -155,12 +155,13 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
   useEffect(() => {
     const keyMap = { ArrowUp: 'U', ArrowLeft: 'L', ArrowRight: 'R' }
     const onKey = (e) => {
+      if (e.key === 'Backspace') { e.preventDefault(); undo(); return }
       const dir = keyMap[e.key]
       if (dir) { e.preventDefault(); tryMove(dir) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [tryMove])
+  }, [tryMove, undo])
 
   // ── Cell click → move to adjacent cell ───────────────────────────────────
   const handleCellClick = useCallback((clickCol, clickRow) => {
@@ -172,6 +173,24 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     const dir = dc === 1 ? 'R' : dc === -1 ? 'L' : 'U'
     tryMove(dir)
   }, [pos, tryMove])
+
+  // ── Undo ──────────────────────────────────────────────────────────────────
+  const undo = useCallback(() => {
+    if (history.length <= 1) return
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    const newHistory = history.slice(0, -1)
+    const newPos     = newHistory[newHistory.length - 1]
+    const newSeq     = seq.slice(0, -1)
+    const newMaxRow  = Math.max(...newHistory.map(([, r]) => r))
+    const [, newRow] = newPos
+    setFlash(null)
+    setPos(newPos)
+    setSeq(newSeq)
+    setHistory(newHistory)
+    setMaxRow(newMaxRow)
+    setUserScrollOffset(null)
+    setPlayerViewOffset(prev => (newRow < prev ? Math.max(0, newRow) : prev))
+  }, [history, seq])
 
   // ── Reset ─────────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
@@ -229,13 +248,20 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
             {maxRow}
           </div>
         </div>
-        <div className="text-3xl select-none">🚇</div>
         <div className="text-center">
           <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
             {t('tunnel.hud.moves')}
           </div>
-          <div className="text-lg font-black" style={{ color: palette.white }}>
+          <div className="text-3xl font-black" style={{ color: palette.white }}>
             {seq.length}
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
+            {t('tunnel.hud.ratio')}
+          </div>
+          <div className="text-3xl font-black" style={{ color: palette.objBasicTeal }}>
+            {seq.length > 0 ? Math.round(maxRow / seq.length * 100) + '%' : '—'}
           </div>
         </div>
       </div>
@@ -421,6 +447,12 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
           className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100"
           style={{ background: palette.btnBlue }}
         >→</button>
+        <button
+          onPointerDown={undo}
+          disabled={history.length <= 1}
+          className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100 disabled:opacity-30"
+          style={{ background: palette.divider }}
+        >↩</button>
       </div>
 
     </div>
