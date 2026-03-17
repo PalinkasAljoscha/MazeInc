@@ -246,7 +246,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
       >
         <div className="text-center">
           <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('tunnel.hud.height')}
+            {t('ladder.hud.height')}
           </div>
           <div className="text-3xl font-black" style={{ color: palette.scoreYellow }}>
             {maxRow}
@@ -254,7 +254,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
         </div>
         <div className="text-center">
           <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('tunnel.hud.moves')}
+            {t('ladder.hud.moves')}
           </div>
           <div className="text-3xl font-black" style={{ color: palette.white }}>
             {seq.length}
@@ -262,7 +262,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
         </div>
         <div className="text-center">
           <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('tunnel.hud.undos')}
+            {t('ladder.hud.undos')}
           </div>
           <div className="text-3xl font-black" style={{ color: palette.objBasicTeal }}>
             {undoCount}
@@ -287,7 +287,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
             overflow="hidden"
           >
             <defs>
-              <clipPath id="tunnel-board-clip">
+              <clipPath id="ladder-board-clip">
                 <rect x={0} y={0} width={BOARD_WIDTH} height={VISIBLE_ROWS} />
               </clipPath>
             </defs>
@@ -313,7 +313,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
             })}
 
             {/* ── Path lines, arrowheads, dots — clipped to board area ── */}
-            <g clipPath="url(#tunnel-board-clip)">
+            <g clipPath="url(#ladder-board-clip)">
             {displayHistory.length > 1 && (() => {
               const offsets = computeLateralOffsets(displayHistory)
               return displayHistory.slice(0, -1).map((from, i) => {
@@ -469,7 +469,7 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
 }
 
 export const meta = {
-  id: 'tunnel',
+  id: 'ladder',
   title: 'Ladder to Infinity',
   topics: ['sequences', 'logic', 'navigation'],
   minAge: 8,

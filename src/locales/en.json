@@ -37,12 +37,12 @@
       "title": "Balance",
       "description": "Stack numbered cubes. Balance left = right, or build an ascending sequence to clear the field!"
     },
-    "tunnel": {
+    "ladder": {
       "title": "Ladder to Infinity",
       "description": "Climb as high as you can — but never repeat a sequence of moves!"
     }
   },
-  "tunnel": {
+  "ladder": {
     "hud": {
       "height": "Height",
       "moves": "Moves",
