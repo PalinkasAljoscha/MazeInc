@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
+import { PathLayer } from '../shared/pathViz.jsx'
 
 // ── Level config ──────────────────────────────────────────────────────────────
 const LEVELS = {
@@ -31,27 +32,6 @@ function findRepeatSeq(s) {
 // Board: (0,0) = bottom-left; SVG: (0,0) = top-left → flip row axis.
 function toSvg(col, row, size) {
   return [col + 0.5, size - 1 - row + 0.5]
-}
-
-// ── Path color helpers ────────────────────────────────────────────────────────
-// Segment i = line from displayHistory[i] to displayHistory[i+1] = move seq[i].
-// During a flash: first occurrence of the repeat → green, second → pink.
-function segColor(i, flash) {
-  if (!flash) return palette.objBasicBlue
-  const { start, unitLen } = flash
-  if (i >= start && i < start + unitLen) return palette.correctGreen
-  if (i >= start + unitLen && i < start + 2 * unitLen) return palette.objBasicPink
-  return palette.objBasicBlue
-}
-
-// Node i = displayHistory[i].
-// Node at start+unitLen is boundary: belongs to the second (pink) occurrence.
-function dotColor(i, flash) {
-  if (!flash) return palette.objBasicBlue
-  const { start, unitLen } = flash
-  if (i >= start && i < start + unitLen) return palette.correctGreen
-  if (i >= start + unitLen && i <= start + 2 * unitLen) return palette.objBasicPink
-  return palette.objBasicBlue
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -237,44 +217,13 @@ export default function NewWays({ level = 2, onComplete }) {
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >★</text>
 
-        {/* ── Path lines ── */}
-        {displayHistory.length > 1 && displayHistory.slice(0, -1).map((from, i) => {
-          const to = displayHistory[i + 1]
-          const [x1, y1] = toSvg(from[0], from[1], size)
-          const [x2, y2] = toSvg(to[0], to[1], size)
-          const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
-          return (
-            <line
-              key={`seg-${i}`}
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={segColor(i, flash)}
-              strokeWidth={flash ? 0.16 : 0.11}
-              strokeLinecap="round"
-              opacity={flash ? (inRepeat ? 1 : 0.28) : 0.85}
-              style={{ pointerEvents: 'none' }}
-            />
-          )
-        })}
-
-        {/* ── Path dots at intermediate visited nodes (skip index 0 = start) ── */}
-        {displayHistory.slice(1).map(([c, r], idx) => {
-          const i = idx + 1   // actual index in displayHistory
-          const isCurrentPlayer = !flash && i === displayHistory.length - 1
-          if (isCurrentPlayer) return null   // drawn as the player circle below
-          const isProposed = flash && i === displayHistory.length - 1
-          const [cx, cy] = toSvg(c, r, size)
-          const inRepeat = flash && i >= flash.start && i <= flash.start + 2 * flash.unitLen
-          return (
-            <circle
-              key={`dot-${i}`}
-              cx={cx} cy={cy}
-              r={isProposed ? 0.2 : 0.1}
-              fill={dotColor(i, flash)}
-              opacity={flash ? (inRepeat ? (isProposed ? 0.65 : 1) : 0.25) : 1}
-              style={{ pointerEvents: 'none' }}
-            />
-          )
-        })}
+        {/* ── Path lines, arrowheads, dots ── */}
+        <PathLayer
+          displayHistory={displayHistory}
+          flash={flash}
+          toSvgCoord={(col, row) => toSvg(col, row, size)}
+          hidePlayerDot
+        />
 
         {/* ── Player (current position) ── */}
         {!won && (() => {

@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
+import { PathLayer } from '../shared/pathViz.jsx'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const BOARD_WIDTH_BY_LEVEL = { 4: 3, 5: 2 }
 const VISIBLE_ROWS = 12
 const MOVE_DELTA = { U: [0, 1], L: [-1, 0], R: [1, 0] }
 
-// ── Core constraint (same as New Ways) ───────────────────────────────────────
+// ── Core constraint ───────────────────────────────────────────────────────────
 function findRepeatSeq(s) {
   const n = s.length
   for (let unitLen = 1; unitLen <= Math.floor(n / 2); unitLen++) {
@@ -26,72 +27,8 @@ function toSvg(col, row, viewOffset) {
   return [col + 0.5, VISIBLE_ROWS - 1 - (row - viewOffset) + 0.5]
 }
 
-// ── Lateral-segment Y-offsets ─────────────────────────────────────────────────
-// Lateral moves (L/R) at the same board row share an identical SVG y-coordinate
-// and would overlap. We spread them apart vertically so each is legible.
-// At most 3 laterals can occur at the same row (RLR or LRL — more is a square).
-const LATERAL_SPREAD = 0.18  // SVG units between parallel lateral lines
-
-function computeLateralOffsets(history) {
-  const n = history.length - 1
-  const offsets = new Array(n).fill(0)
-  // collect lateral segment indices grouped by board row
-  const byRow = {}
-  for (let i = 0; i < n; i++) {
-    const [, r1] = history[i]
-    const [, r2] = history[i + 1]
-    if (r1 === r2) {           // same row → lateral move
-      ;(byRow[r1] = byRow[r1] || []).push(i)
-    }
-  }
-  for (const segs of Object.values(byRow)) {
-    if (segs.length === 2) {
-      offsets[segs[0]] = +LATERAL_SPREAD / 2   // earlier → lower on screen
-      offsets[segs[1]] = -LATERAL_SPREAD / 2   // later   → higher on screen (on top)
-    } else if (segs.length >= 3) {
-      offsets[segs[0]] = +LATERAL_SPREAD       // earliest → lowest
-      offsets[segs[1]] =  0
-      offsets[segs[2]] = -LATERAL_SPREAD       // latest   → highest (on top)
-    }
-    // length === 1: offset stays 0
-  }
-  return offsets
-}
-
-// ── Arrowhead helper ──────────────────────────────────────────────────────────
-// Returns SVG polygon `points` string for a filled triangle arrowhead whose
-// tip sits exactly at (x2,y2). Returns null for degenerate segments.
-function arrowHead(x1, y1, x2, y2) {
-  const dx = x2 - x1, dy = y2 - y1
-  const len = Math.sqrt(dx * dx + dy * dy)
-  if (len < 0.01) return null
-  const ux = dx / len, uy = dy / len   // unit direction
-  const px = -uy,     py = ux          // perpendicular
-  const L = 0.14, W = 0.10             // back-length & half-spread
-  const lx = x2 - ux * L + px * W,  ly = y2 - uy * L + py * W
-  const rx = x2 - ux * L - px * W,  ry = y2 - uy * L - py * W
-  return `${x2.toFixed(3)},${y2.toFixed(3)} ${lx.toFixed(3)},${ly.toFixed(3)} ${rx.toFixed(3)},${ry.toFixed(3)}`
-}
-
-// ── Path color helpers (identical to New Ways) ────────────────────────────────
-function segColor(i, flash) {
-  if (!flash) return palette.objBasicBlue
-  const { start, unitLen } = flash
-  if (i >= start && i < start + unitLen) return palette.correctGreen
-  if (i >= start + unitLen && i < start + 2 * unitLen) return palette.objBasicPink
-  return palette.objBasicBlue
-}
-
-function dotColor(i, flash) {
-  if (!flash) return palette.objBasicBlue
-  const { start, unitLen } = flash
-  if (i >= start && i < start + unitLen) return palette.correctGreen
-  if (i >= start + unitLen && i <= start + 2 * unitLen) return palette.objBasicPink
-  return palette.objBasicBlue
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function NewWayTunnel({ level = 4, onComplete }) {
+export default function LadderToInfinity({ level = 4, onComplete }) {
   const { t } = useTranslation()
   const BOARD_WIDTH = BOARD_WIDTH_BY_LEVEL[level] ?? 2
 
@@ -314,57 +251,11 @@ export default function NewWayTunnel({ level = 4, onComplete }) {
 
             {/* ── Path lines, arrowheads, dots — clipped to board area ── */}
             <g clipPath="url(#ladder-board-clip)">
-            {displayHistory.length > 1 && (() => {
-              const offsets = computeLateralOffsets(displayHistory)
-              return displayHistory.slice(0, -1).map((from, i) => {
-                const to = displayHistory[i + 1]
-                const yOff = offsets[i]
-                const [x1, y1b] = toSvg(from[0], from[1], viewOffset)
-                const [x2, y2b] = toSvg(to[0], to[1], viewOffset)
-                const y1 = y1b + yOff, y2 = y2b + yOff
-                const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
-                const color   = segColor(i, flash)
-                const sw      = flash ? 0.08 : 0.055
-                const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
-                // Line runs from 10 % to 95 % of the segment (leaves room at
-                // both ends so crowded nodes stay readable)
-                const lx1 = x1 + 0.20 * (x2 - x1),  ly1 = y1 + 0.20 * (y2 - y1)
-                const lx2 = x1 + 0.68 * (x2 - x1),  ly2 = y1 + 0.68 * (y2 - y1)
-                const atx  = x1 + 0.85 * (x2 - x1),  aty  = y1 + 0.85 * (y2 - y1)
-                const arrPts = arrowHead(x1, y1, atx, aty)
-                return (
-                  <g key={`seg-${i}`} style={{ pointerEvents: 'none' }}>
-                    <line
-                      x1={lx1} y1={ly1} x2={lx2} y2={ly2}
-                      stroke={color} strokeWidth={sw}
-                      strokeLinecap="round" opacity={opacity}
-                    />
-                    {arrPts && (
-                      <polygon points={arrPts} fill={color} opacity={opacity} />
-                    )}
-                  </g>
-                )
-              })
-            })()}
-
-            {/* ── Path dots at visited nodes (skip index 0 = start) ── */}
-            {displayHistory.slice(1).map(([c, r], idx) => {
-              const i = idx + 1
-              const isProposed = flash && i === displayHistory.length - 1
-              const [cx, cy] = toSvg(c, r, viewOffset)
-              const inRepeat = flash && i >= flash.start && i <= flash.start + 2 * flash.unitLen
-              return (
-                <circle
-                  key={`dot-${i}`}
-                  cx={cx} cy={cy}
-                  r={isProposed ? 0.2 : 0.1}
-                  fill={dotColor(i, flash)}
-                  opacity={flash ? (inRepeat ? (isProposed ? 0.65 : 1) : 0.25) : 1}
-                  style={{ pointerEvents: 'none' }}
-                />
-              )
-            })}
-
+              <PathLayer
+                displayHistory={displayHistory}
+                flash={flash}
+                toSvgCoord={(col, row) => toSvg(col, row, viewOffset)}
+              />
             </g>{/* end clip */}
 
             {/* ── Start marker at (0, 0) ── */}
