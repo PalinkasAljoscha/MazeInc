@@ -46,7 +46,7 @@
     "hud": {
       "height": "Height",
       "moves": "Moves",
-      "ratio": "H/M %"
+      "undos": "Undos"
     },
     "gameOver": {
       "title": "Blocked! 🧱",

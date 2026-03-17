@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const BOARD_WIDTH = 2
+const BOARD_WIDTH_BY_LEVEL = { 3: 3, 5: 2 }
 const VISIBLE_ROWS = 12
 const MOVE_DELTA = { U: [0, 1], L: [-1, 0], R: [1, 0] }
 
@@ -93,11 +93,13 @@ function dotColor(i, flash) {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function NewWayTunnel({ level = 3, onComplete }) {
   const { t } = useTranslation()
+  const BOARD_WIDTH = BOARD_WIDTH_BY_LEVEL[level] ?? 2
 
   const [pos, setPos] = useState([0, 0])
   const [seq, setSeq] = useState('')
   const [history, setHistory] = useState([[0, 0]])
   const [maxRow, setMaxRow] = useState(0)            // score = height achieved
+  const [undoCount, setUndoCount] = useState(0)
   const [flash, setFlash] = useState(null)           // { start, unitLen, proposedPos }
   const [playerViewOffset, setPlayerViewOffset] = useState(0)    // auto-follows player
   const [userScrollOffset, setUserScrollOffset] = useState(null) // null = follow player
@@ -165,6 +167,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     setSeq(newSeq)
     setHistory(newHistory)
     setMaxRow(newMaxRow)
+    setUndoCount(c => c + 1)
     setUserScrollOffset(null)
     setPlayerViewOffset(prev => (newRow < prev ? Math.max(0, newRow) : prev))
   }, [history, seq])
@@ -199,6 +202,7 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
     setSeq('')
     setHistory([[0, 0]])
     setMaxRow(0)
+    setUndoCount(0)
     setFlash(null)
     setPlayerViewOffset(0)
     setUserScrollOffset(null)
@@ -258,10 +262,10 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
         </div>
         <div className="text-center">
           <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('tunnel.hud.ratio')}
+            {t('tunnel.hud.undos')}
           </div>
           <div className="text-3xl font-black" style={{ color: palette.objBasicTeal }}>
-            {seq.length > 0 ? Math.round(maxRow / seq.length * 100) + '%' : '—'}
+            {undoCount}
           </div>
         </div>
       </div>
@@ -471,5 +475,5 @@ export const meta = {
   minAge: 8,
   maxAge: 99,
   minLevel: 3,
-  maxLevel: 3,
+  maxLevel: 5,
 }
