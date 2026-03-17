@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const BOARD_WIDTH_BY_LEVEL = { 3: 3, 5: 2 }
+const BOARD_WIDTH_BY_LEVEL = { 4: 3, 5: 2 }
 const VISIBLE_ROWS = 12
 const MOVE_DELTA = { U: [0, 1], L: [-1, 0], R: [1, 0] }
 
@@ -91,7 +91,7 @@ function dotColor(i, flash) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function NewWayTunnel({ level = 3, onComplete }) {
+export default function NewWayTunnel({ level = 4, onComplete }) {
   const { t } = useTranslation()
   const BOARD_WIDTH = BOARD_WIDTH_BY_LEVEL[level] ?? 2
 
@@ -470,10 +470,10 @@ export default function NewWayTunnel({ level = 3, onComplete }) {
 
 export const meta = {
   id: 'tunnel',
-  title: 'New Way — The Tunnel',
+  title: 'Ladder to Infinity',
   topics: ['sequences', 'logic', 'navigation'],
   minAge: 8,
   maxAge: 99,
-  minLevel: 3,
+  minLevel: 4,
   maxLevel: 5,
 }

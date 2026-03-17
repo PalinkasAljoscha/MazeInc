@@ -65,7 +65,7 @@ const GAMES = [
     id: 'tunnel',
     titleKey: 'games.tunnel.title',
     descKey: 'games.tunnel.description',
-    emoji: '🚇',
+    emoji: '🪜',
     color: 'from-sky-600 to-indigo-700',
     shadow: 'shadow-indigo-300',
     minLevel: tunnelMeta.minLevel,
