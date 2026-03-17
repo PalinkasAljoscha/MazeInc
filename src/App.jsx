@@ -8,18 +8,10 @@ import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
 
 const ALL_LEVELS = [1, 2, 3, 4, 5]
 
-// Map game id → React component (used when rendering the active game)
-const GAME_COMPONENTS = {
-  'multiples-catcher': MultiplesCatcher,
-  'new-ways': NewWays,
-  'feed-the-numbers': FeedTheNumbers,
-  'balance': Balance,
-  'ladder': LadderToInfinity,
-}
-
 const GAMES = [
   {
     id: 'multiples-catcher',
+    component: MultiplesCatcher,
     titleKey: 'games.multiplesCatcher.title',
     descKey: 'games.multiplesCatcher.description',
     emoji: '🎯',
@@ -31,6 +23,7 @@ const GAMES = [
   },
   {
     id: 'new-ways',
+    component: NewWays,
     titleKey: 'games.newWays.title',
     descKey: 'games.newWays.description',
     emoji: '🗺️',
@@ -41,6 +34,7 @@ const GAMES = [
   },
   {
     id: 'balance',
+    component: Balance,
     titleKey: 'games.balance.title',
     descKey: 'games.balance.description',
     emoji: '⚖️',
@@ -52,6 +46,7 @@ const GAMES = [
   },
   {
     id: 'feed-the-numbers',
+    component: FeedTheNumbers,
     titleKey: 'games.feedTheNumbers.title',
     descKey: 'games.feedTheNumbers.description',
     emoji: '🍽️',
@@ -63,6 +58,7 @@ const GAMES = [
   },
   {
     id: 'ladder',
+    component: LadderToInfinity,
     titleKey: 'games.ladder.title',
     descKey: 'games.ladder.description',
     emoji: '🪜',
@@ -196,9 +192,10 @@ export default function App() {
     setActiveSpeed(speed)
   }
 
-  const GameComponent = activeGame ? GAME_COMPONENTS[activeGame] : null
+  const activeGameConfig = activeGame ? GAMES.find((g) => g.id === activeGame) : null
+  const GameComponent = activeGameConfig?.component ?? null
   if (GameComponent) {
-    const game = GAMES.find((g) => g.id === activeGame)
+    const game = activeGameConfig
     return (
       <div className="w-screen h-screen flex flex-col bg-gray-900">
         {/* Header bar */}
