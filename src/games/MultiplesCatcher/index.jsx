@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import Phaser from 'phaser'
 import GameScene from './GameScene'
 import { palette } from '../../theme.js'
+import TouchButton from '../../components/TouchButton.jsx'
 
 export default function MultiplesCatcher({ level = 2, speed = 4, onComplete }) {
   const { t } = useTranslation()
@@ -58,27 +59,6 @@ export default function MultiplesCatcher({ level = 2, speed = 4, onComplete }) {
         <TouchButton onPress={handleRight} label="→" color="bg-indigo-600 active:bg-indigo-400" />
       </div>
     </div>
-  )
-}
-
-function TouchButton({ onPress, label, color, wide }) {
-  // Use pointerdown so it responds immediately on touch screens
-  return (
-    <button
-      onPointerDown={(e) => {
-        e.preventDefault()
-        onPress()
-      }}
-      className={`
-        ${color} ${wide ? 'px-10' : 'px-6'} py-4
-        rounded-2xl text-white font-black text-2xl
-        select-none touch-none
-        transition-transform active:scale-90
-        shadow-lg
-      `}
-    >
-      {label}
-    </button>
   )
 }
 

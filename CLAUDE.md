@@ -33,11 +33,17 @@ src/
   i18n.js                          # i18next setup; imports locale files
   main.jsx                         # Entry point
   locales/
-    en.json                        # All UI strings — add keys here for every new game
+    en.json                        # All UI strings — add keys here for every new string
+  components/
+    TouchButton.jsx                # Shared on-screen touch button (← → ↓ etc.) — import this, never re-implement locally
   games/
+    shared/
+      pathViz.jsx                  # Shared <PathLayer> SVG component for sequence/path games (NewWays, LadderToInfinity)
     MultiplesCatcher/
       index.jsx                    # React wrapper + on-screen touch buttons
       GameScene.js                 # Phaser scene — all game logic
+public/
+  favicon.svg                      # App favicon (SVG, also used as apple-touch-icon)
 ```
 
 ---
@@ -48,6 +54,7 @@ src/
 - **Strings** — Never hardcode visible text. Use `t()` everywhere. Add keys to all locale files for every new string.
 - **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
 - **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names. This ensures the app works correctly when published to any subdirectory or hosting provider.
+- **Shared components** — Never re-implement `TouchButton` inside a game wrapper. Always import from `src/components/TouchButton.jsx`. For sequence/path games that draw a move history in SVG, use `<PathLayer>` from `src/games/shared/pathViz.jsx` rather than duplicating the rendering logic.
 - **Prototyping folder** — `prototyping/` contains exploratory simulations and rough sketches. Never import from or copy code directly from this folder into the app. It may be read as reference to understand intended logic, but all app code must be written cleanly from scratch.
 
 ---
@@ -98,27 +105,11 @@ When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the ga
 - The **Start New** button in the React header bar uses the same blue (`#3498db` / `#2980b9` hover) and `font-black` to stay visually consistent with the in-game Play Again button
 
 **Adding a new game:**
-1. Create `src/games/MyGame/index.jsx` (React wrapper + touch controls) and `GameScene.js` (Phaser scene with `LEVELS` config)
+1. Create `src/games/MyGame/index.jsx` (React wrapper) and `GameScene.js` (Phaser scene with `LEVELS` config)
 2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
-3. Import meta and add an entry to the `GAMES` array in `App.jsx`; set `hasSpeed: true` if applicable
-4. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json`
-
----
-
-## Game 1 — Multiples Catcher (built ✓)
-
-6 coloured slots at the bottom (`[2, 3, 4, 5, 6, 7]`). Balls fall one at a time; player steers with ← → (keyboard or touch) and drops with Space / ↓ button. A ball scores if its number is a multiple of the slot it lands in.
-
-**Ball generation** (`GameScene.js`):
-- Level config (`LEVELS`) defines `slotValues`, `minBall`, `maxBall` per level (2–4)
-- `BALLS_PER_SLOT = 2` — bag ensures each slot gets exactly 2 multiples per cycle
-- No consecutive repeat: previous ball's value is excluded from the next draw
-
-**Feedback:**
-- Correct → green burst, floating equation, particle dots
-- Wrong → red flash, camera shake
-
-**Timer:** 60 seconds; game-over overlay shows score with Play Again button.
+3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx` — do not define a local copy
+4. Import the component and meta into `App.jsx`; add a single entry to the `GAMES` array that includes a `component` field (pointing to the imported component), `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, and `hasSpeed` if applicable — there is no separate `GAME_COMPONENTS` map
+5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json`
 
 ---
 
