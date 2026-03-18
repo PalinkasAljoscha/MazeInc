@@ -1,37 +1,10 @@
-import { useEffect, useRef } from 'react'
-import Phaser from 'phaser'
+import { useRef } from 'react'
 import GameScene from './GameScene'
-import { palette } from '../../theme.js'
+import { usePhaserGame } from '../../hooks/usePhaserGame.js'
 
 export default function FeedTheNumbers({ level = 2, speed = 4, onComplete }) {
   const containerRef = useRef(null)
-
-  useEffect(() => {
-    const config = {
-      type: Phaser.AUTO,
-      backgroundColor: palette.gameBg,
-      scene: [GameScene],
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        parent: containerRef.current,
-        width: 480,
-        height: 680,
-      },
-    }
-
-    const game = new Phaser.Game(config)
-    game.registry.set('level', level)
-    game.registry.set('speed', speed)
-
-    game.events.on('gameComplete', ({ score }) => {
-      if (onComplete) onComplete({ correct: true, score })
-    })
-
-    return () => {
-      game.destroy(true)
-    }
-  }, []) // intentionally no deps — game is self-contained
+  usePhaserGame(containerRef, GameScene, { level, speed, onComplete })
 
   return (
     <div className="w-full h-full flex flex-col items-center bg-gray-950">

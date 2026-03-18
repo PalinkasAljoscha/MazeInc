@@ -1,46 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import Phaser from 'phaser'
 import GameScene from './GameScene'
-import { palette } from '../../theme.js'
 import TouchButton from '../../components/TouchButton.jsx'
+import { usePhaserGame } from '../../hooks/usePhaserGame.js'
 
 export default function MultiplesCatcher({ level = 2, speed = 4, onComplete }) {
   const { t } = useTranslation()
   const containerRef = useRef(null)
-  const sceneRef = useRef(null)
-
-  useEffect(() => {
-    const config = {
-      type: Phaser.AUTO,
-      backgroundColor: palette.gameBg,
-      scene: [GameScene],
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        parent: containerRef.current,
-        width: 480,
-        height: 680,
-      },
-    }
-
-    const game = new Phaser.Game(config)
-    game.registry.set('level', level)
-    game.registry.set('speed', speed)
-
-    game.events.on('sceneReady', (scene) => {
-      sceneRef.current = scene
-    })
-
-    game.events.on('gameComplete', ({ score }) => {
-      if (onComplete) onComplete({ correct: true, score })
-    })
-
-    return () => {
-      game.destroy(true)
-      sceneRef.current = null
-    }
-  }, []) // intentionally no deps — game is self-contained
+  const sceneRef = usePhaserGame(containerRef, GameScene, { level, speed, onComplete })
 
   // Touch handlers — forwarded into the Phaser scene
   const handleLeft = () => sceneRef.current?.moveBall(-1)

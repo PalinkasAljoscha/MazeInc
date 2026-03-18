@@ -1,10 +1,10 @@
 import Phaser from 'phaser'
 import { palette, phaser as C } from '../../theme.js'
 import i18n from '../../i18n.js'
+import { GAME_W, GAME_H, SPEED_DIAL } from '../shared/phaserConstants.js'
+import { buildGameOverPanel, createCountdownTimer } from '../shared/phaserUI.js'
 
 // ── layout constants ──────────────────────────────────────────────────────────
-const GAME_W = 480
-const GAME_H = 680
 const HEADER_H = 55
 const BALL_R = 28
 const PIPE_CX = 50
@@ -29,7 +29,6 @@ const HUNGRY_RX = 76                  // ellipse half-width
 const HUNGRY_RY = 46                  // ellipse half-height
 
 const BALL_SPEED_RIGHT_BASE = 130     // px/sec at speed dial 4
-const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
 const BALL_SEND_SPEED = 500           // px/sec — upward when sent
 const GAME_DURATION = 90
 const SEND_BTN_Y = 515                // y-center of in-canvas Send button
@@ -85,7 +84,6 @@ export default class GameScene extends Phaser.Scene {
     this.level = level
     this.ballSpeedRight = BALL_SPEED_RIGHT_BASE * SPEED_DIAL[speed]
     this.score = 0
-    this.timeLeft = GAME_DURATION
     this.isGameOver = false
     this.prevBallNumbers = []   // last ≤4 ball values, fed to get_next_ball_number
     this.stackBalls = []        // [{value, bg, txt}, …]  index 0 = top, last = exit
@@ -105,12 +103,7 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', () => this.sendBall())
 
     // Countdown timer
-    this.timerEvent = this.time.addEvent({
-      delay: 1000,
-      callback: this.onTick,
-      callbackScope: this,
-      repeat: GAME_DURATION - 1,
-    })
+    this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
 
     this.game.events.emit('sceneReady', this)
     this.time.delayedCall(600, this.spawnMovingBall, [], this)
@@ -465,16 +458,6 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(380, this.spawnMovingBall, [], this)
   }
 
-  // ── timer ────────────────────────────────────────────────────────────────────
-  onTick() {
-    this.timeLeft--
-    this.timerText.setText(String(this.timeLeft))
-    if (this.timeLeft <= 10) {
-      this.timerText.setColor(palette.wrongRed)
-    }
-    if (this.timeLeft <= 0) this.endGame()
-  }
-
   // ── game over ────────────────────────────────────────────────────────────────
   endGame() {
     if (this.isGameOver) return
@@ -489,51 +472,21 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.sendBtnZone) this.sendBtnZone.disableInteractive()
 
-    const W = GAME_W
-    const H = GAME_H
-
-    this.add.rectangle(W / 2, H / 2, W, H, C.overlayBlack, 0.75)
-
-    const panel = this.add.graphics()
-    panel.fillStyle(C.gameHeader, 1)
-    panel.fillRoundedRect(W / 2 - 160, H / 2 - 155, 320, 310, 24)
-
-    this.add.text(W / 2, H / 2 - 110, i18n.t('feedTheNumbers.gameOver.title'), {
-      fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
-    }).setOrigin(0.5)
-
-    this.add.text(W / 2, H / 2 - 48, i18n.t('feedTheNumbers.gameOver.scoreLabel'), {
-      fontSize: '20px', fontFamily: 'Arial, sans-serif', color: palette.silverGray,
-    }).setOrigin(0.5)
-
-    this.add.text(W / 2, H / 2 + 14, String(this.score), {
-      fontSize: '72px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
-    }).setOrigin(0.5)
-
-    // Final hungry numbers display
-    this.add.text(W / 2, H / 2 + 82, `${this.hungryLeft}  |  ${this.hungryRight}`, {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.silverGray,
-    }).setOrigin(0.5)
-
-    const btnBg = this.add.graphics()
-    btnBg.fillStyle(C.btnBlue, 1)
-    btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
-
-    this.add.text(W / 2, H / 2 + 135, i18n.t('feedTheNumbers.gameOver.playAgain'), {
-      fontSize: '24px', fontFamily: 'Arial Black, Arial', color: palette.white,
-    }).setOrigin(0.5)
-
-    const btnZone = this.add.zone(W / 2, H / 2 + 135, 220, 56).setInteractive()
-    btnZone.on('pointerdown', () => this.scene.restart())
-    btnZone.on('pointerover', () => {
-      btnBg.clear()
-      btnBg.fillStyle(C.btnBlueHover, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
-    })
-    btnZone.on('pointerout', () => {
-      btnBg.clear()
-      btnBg.fillStyle(C.btnBlue, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 107, 220, 56, 16)
+    buildGameOverPanel(this, {
+      W: GAME_W, H: GAME_H,
+      titleKey:      'feedTheNumbers.gameOver.title',
+      scoreLabelKey: 'feedTheNumbers.gameOver.scoreLabel',
+      score:         this.score,
+      playAgainKey:  'feedTheNumbers.gameOver.playAgain',
+      onRestart:     () => this.scene.restart(),
+      panelH:        310,
+      panelTopOff:   155,
+      titleOff:      -110,
+      labelOff:      -48,
+      scoreOff:      14,
+      btnOff:        107,
+      btnTextOff:    135,
+      extraLines:    [{ yOff: 82, text: `${this.hungryLeft}  |  ${this.hungryRight}` }],
     })
 
     this.game.events.emit('gameComplete', { score: this.score })

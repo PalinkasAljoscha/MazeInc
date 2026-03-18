@@ -1,17 +1,14 @@
 import Phaser from 'phaser'
 import { palette, phaser as C } from '../../theme.js'
 import i18n from '../../i18n.js'
+import { GAME_W, GAME_H, SPEED_DIAL, FAST_SPEED, MOVE_COOLDOWN } from '../shared/phaserConstants.js'
+import { buildGameOverPanel, createCountdownTimer } from '../shared/phaserUI.js'
 
 // ── constants (level-independent) ─────────────────────────────────────────
-const GAME_W = 480
-const GAME_H = 680
 const SLOT_H = 90                          // height of the bottom slot row
 const HEADER_H = 60                        // top bar for score + timer
 const BALL_R = 32                          // ball radius
 const FALL_SPEED_BASE = 90               // px/sec at speed dial 4
-const SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]  // index = dial value 1–5
-const FAST_SPEED = 600                     // px/sec when space / drop held
-const MOVE_COOLDOWN = 150                  // ms between successive moves on hold
 const GAME_DURATION = 60                   // seconds
 const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle
 
@@ -58,7 +55,6 @@ export default class GameScene extends Phaser.Scene {
     this.minBall    = levelCfg.minBall
 
     this.score = 0
-    this.timeLeft = GAME_DURATION
     this.isGameOver = false
     this.ball = null
     this.isFast = false
@@ -139,12 +135,7 @@ export default class GameScene extends Phaser.Scene {
     this.lastMoveTime = 0
 
     // ── timer event ──
-    this.timerEvent = this.time.addEvent({
-      delay: 1000,
-      callback: this.onTick,
-      callbackScope: this,
-      repeat: GAME_DURATION - 1,
-    })
+    this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
 
     // ── expose control methods to React (touch buttons) ──
     this.game.events.emit('sceneReady', this)
@@ -371,21 +362,6 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.shake(220, 0.008)
   }
 
-  // ── timer tick ────────────────────────────────────────────────────────────
-  onTick() {
-    this.timeLeft--
-    this.timerText.setText(String(this.timeLeft))
-
-    // Turn timer red when time is short
-    if (this.timeLeft <= 10) {
-      this.timerText.setStyle({ color: palette.wrongRed })
-    }
-
-    if (this.timeLeft <= 0) {
-      this.endGame()
-    }
-  }
-
   // ── game over ─────────────────────────────────────────────────────────────
   endGame() {
     if (this.isGameOver) return
@@ -401,60 +377,13 @@ export default class GameScene extends Phaser.Scene {
       this.ball = null
     }
 
-    const W = GAME_W
-    const H = GAME_H
-
-    // Dark overlay
-    const overlay = this.add.rectangle(W / 2, H / 2, W, H, C.overlayBlack, 0.75)
-
-    // Panel
-    const panel = this.add.graphics()
-    panel.fillStyle(C.gameHeader, 1)
-    panel.fillRoundedRect(W / 2 - 160, H / 2 - 140, 320, 280, 24)
-
-    this.add.text(W / 2, H / 2 - 95, i18n.t('multiplesCatcher.gameOver.title'), {
-      fontSize: '30px',
-      fontFamily: 'Arial Black, Arial',
-      color: palette.scoreYellow,
-    }).setOrigin(0.5)
-
-    this.add.text(W / 2, H / 2 - 30, i18n.t('multiplesCatcher.gameOver.scoreLabel'), {
-      fontSize: '20px',
-      fontFamily: 'Arial, sans-serif',
-      color: palette.silverGray,
-    }).setOrigin(0.5)
-
-    this.add.text(W / 2, H / 2 + 30, String(this.score), {
-      fontSize: '72px',
-      fontFamily: 'Arial Black, Arial',
-      color: palette.correctGreen,
-    }).setOrigin(0.5)
-
-    // Play Again button
-    const btnBg = this.add.graphics()
-    btnBg.fillStyle(C.btnBlue, 1)
-    btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
-
-    const btnText = this.add.text(W / 2, H / 2 + 118, i18n.t('multiplesCatcher.gameOver.playAgain'), {
-      fontSize: '24px',
-      fontFamily: 'Arial Black, Arial',
-      color: palette.white,
-    }).setOrigin(0.5)
-
-    // Make the button interactive
-    const btnZone = this.add.zone(W / 2, H / 2 + 118, 220, 56).setInteractive()
-    btnZone.on('pointerdown', () => {
-      this.scene.restart()
-    })
-    btnZone.on('pointerover', () => {
-      btnBg.clear()
-      btnBg.fillStyle(C.btnBlueHover, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
-    })
-    btnZone.on('pointerout', () => {
-      btnBg.clear()
-      btnBg.fillStyle(C.btnBlue, 1)
-      btnBg.fillRoundedRect(W / 2 - 110, H / 2 + 90, 220, 56, 16)
+    buildGameOverPanel(this, {
+      W: GAME_W, H: GAME_H,
+      titleKey:      'multiplesCatcher.gameOver.title',
+      scoreLabelKey: 'multiplesCatcher.gameOver.scoreLabel',
+      score:         this.score,
+      playAgainKey:  'multiplesCatcher.gameOver.playAgain',
+      onRestart:     () => this.scene.restart(),
     })
 
     // Notify React

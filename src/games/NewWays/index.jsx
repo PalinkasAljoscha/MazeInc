@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
+import { findRepeatSeq } from '../shared/repeatSeq.js'
 
 // ── Level config ──────────────────────────────────────────────────────────────
 const LEVELS = {
@@ -12,21 +13,6 @@ const LEVELS = {
 }
 
 const MOVE_DELTA = { U: [0, 1], D: [0, -1], L: [-1, 0], R: [1, 0] }
-
-// ── Core constraint (mirrors experiment.ipynb) ────────────────────────────────
-// Returns { unit, start } if s contains a repeated consecutive unit, else null.
-function findRepeatSeq(s) {
-  const n = s.length
-  for (let unitLen = 1; unitLen <= Math.floor(n / 2); unitLen++) {
-    for (let start = 0; start <= n - 2 * unitLen; start++) {
-      const unit = s.slice(start, start + unitLen)
-      if (s.slice(start + unitLen, start + 2 * unitLen) === unit) {
-        return { unit, start }
-      }
-    }
-  }
-  return null
-}
 
 // Board (col, row) → SVG center (x, y).
 // Board: (0,0) = bottom-left; SVG: (0,0) = top-left → flip row axis.
