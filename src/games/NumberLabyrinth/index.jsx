@@ -178,6 +178,8 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const atGoal = pos[0] === cols - 1 && pos[1] === rows - 1
 
   // ── Movement ─────────────────────────────────────────────────────────────
+  // Moving in the opposite direction of the previous move undoes that move
+  // instead of adding a new step.
   const tryMove = useCallback((dir) => {
     if (validated) return
     const DELTAS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] }
@@ -185,9 +187,18 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     const [c, r] = pos
     const nc = c + dc, nr = r + dr
     if (nc < 0 || nc >= cols || nr < 0 || nr >= rows) return
+    // Undo: target cell is where we came from (second-to-last in history)
+    if (history.length >= 2) {
+      const [pc, pr] = history[history.length - 2]
+      if (nc === pc && nr === pr) {
+        setPos([pc, pr])
+        setHistory(h => h.slice(0, -1))
+        return
+      }
+    }
     setPos([nc, nr])
     setHistory(h => [...h, [nc, nr]])
-  }, [pos, validated, cols, rows])
+  }, [pos, validated, cols, rows, history])
 
   // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
