@@ -42,10 +42,19 @@ export const palette = {
   // ── Misc ──
   overlayBlack: '#000000',
 
-  // ── Board cells (New Ways game) ──
+  // ── Board cells (New Ways / Ladder / NumberLabyrinth games) ──
   boardCellLight: '#f0d9b5',
   boardCellDark:  '#b58863',
   boardBlocked:   '#111120',
+
+  // ── Number Labyrinth board text + flags ──
+  boardTextDark:  '#3d2b1f',   // text on light-coloured cells
+  boardTextLight: '#f5e6d0',   // text on dark-coloured cells
+  flagPoleColor:  '#8b5a2b',   // wooden pole for start/goal flags
+
+  // ── Balance game half-backgrounds ──
+  leftHalfBg:     '#1c1c38',   // left side slightly blue-purple
+  rightHalfBg:    '#1c2838',   // right side slightly teal-dark
 
   // ── Feed the Numbers game ──
   hungryBorder:   '#c39bd3',   // light purple border for hungry ellipses
@@ -66,6 +75,9 @@ export const phaser = {
   slotColorsCss: [palette.objBasicRed, palette.objBasicOrange, palette.objBasicYellow,
                   palette.objBasicGreen, palette.objBasicBlue, palette.objBasicPurple,
                   palette.objBasicTeal, palette.objBasicPink],
+  white:         toHex(palette.white),
+  leftHalfBg:    toHex(palette.leftHalfBg),
+  rightHalfBg:   toHex(palette.rightHalfBg),
   ballFill:      toHex(palette.ballFill),
   ballBorder:    toHex(palette.ballBorder),
   scoreYellow:   toHex(palette.scoreYellow),

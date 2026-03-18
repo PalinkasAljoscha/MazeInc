@@ -40,6 +40,10 @@
     "ladder": {
       "title": "Ladder to Infinity",
       "description": "Climb as high as you can — but never repeat a sequence of moves!"
+    },
+    "numberLabyrinth": {
+      "title": "Number Labyrinth",
+      "description": "Navigate from corner to corner — but you can only step onto a higher number!"
     }
   },
   "ladder": {
@@ -102,6 +106,14 @@
       "scoreLabel": "Your score:",
       "playAgain": "Play Again"
     }
+  },
+  "numberLabyrinth": {
+    "done": "Done ✓",
+    "retry": "Retry",
+    "invalid": "{{count}} invalid move(s) — try again!",
+    "wonTitle": "Solved! 🎉",
+    "movesLabel": "Moves",
+    "playAgain": "Play Again"
   },
   "multiplesCatcher": {
     "hud": {

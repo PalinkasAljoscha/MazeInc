@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { palette } from './theme.js'
 import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
 import NewWays, { meta as newWaysMeta } from './games/NewWays'
 import FeedTheNumbers, { meta as feedTheNumbersMeta } from './games/FeedTheNumbers'
 import Balance, { meta as balanceMeta } from './games/Balance'
 import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
+import NumberLabyrinth, { meta as numberLabyrinthMeta } from './games/NumberLabyrinth'
 
 const ALL_LEVELS = [1, 2, 3, 4, 5]
 
@@ -66,6 +68,17 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: ladderMeta.minLevel,
     maxLevel: ladderMeta.maxLevel,
+  },
+  {
+    id: 'number-labyrinth',
+    component: NumberLabyrinth,
+    titleKey: 'games.numberLabyrinth.title',
+    descKey: 'games.numberLabyrinth.description',
+    emoji: '🔢',
+    color: 'from-amber-500 to-orange-600',
+    shadow: 'shadow-orange-300',
+    minLevel: numberLabyrinthMeta.minLevel,
+    maxLevel: numberLabyrinthMeta.maxLevel,
   },
 ]
 
@@ -223,9 +236,9 @@ export default function App() {
             <button
               onClick={() => setGameKey((k) => k + 1)}
               className="text-white font-black text-xl rounded-2xl px-6 py-2 transition-colors active:scale-95 transition-transform duration-100"
-              style={{ backgroundColor: '#3498db' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2980b9'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3498db'}
+              style={{ backgroundColor: palette.btnBlue }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = palette.btnBlue}
             >
               {t('home.startNew')}
             </button>

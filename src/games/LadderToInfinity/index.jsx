@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
+import TouchButton from '../../components/TouchButton.jsx'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const BOARD_WIDTH_BY_LEVEL = { 4: 3, 5: 2 }
@@ -332,27 +333,18 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
         className="flex justify-center items-center gap-3 px-4 py-3 shrink-0"
         style={{ background: palette.gameHeader, borderTop: `1px solid ${palette.divider}` }}
       >
-        <button
-          onPointerDown={() => tryMove('L')}
-          className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100"
-          style={{ background: palette.btnBlue }}
-        >←</button>
-        <button
-          onPointerDown={() => tryMove('U')}
-          className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100"
-          style={{ background: palette.btnBlue }}
-        >↑</button>
-        <button
-          onPointerDown={() => tryMove('R')}
-          className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100"
-          style={{ background: palette.btnBlue }}
-        >→</button>
-        <button
-          onPointerDown={undo}
-          disabled={history.length <= 1}
-          className="flex-1 max-w-[100px] rounded-2xl py-3 text-2xl font-black text-white active:scale-95 transition-transform duration-100 disabled:opacity-30"
-          style={{ background: palette.divider }}
-        >↩</button>
+        <div className="flex-1 max-w-[100px]">
+          <TouchButton onPress={() => tryMove('L')} label="←" color="w-full" style={{ background: palette.btnBlue }} />
+        </div>
+        <div className="flex-1 max-w-[100px]">
+          <TouchButton onPress={() => tryMove('U')} label="↑" color="w-full" style={{ background: palette.btnBlue }} />
+        </div>
+        <div className="flex-1 max-w-[100px]">
+          <TouchButton onPress={() => tryMove('R')} label="→" color="w-full" style={{ background: palette.btnBlue }} />
+        </div>
+        <div className="flex-1 max-w-[100px]">
+          <TouchButton onPress={undo} label="↩" color="w-full" style={{ background: palette.divider }} disabled={history.length <= 1} />
+        </div>
       </div>
 
     </div>

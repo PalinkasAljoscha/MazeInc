@@ -255,20 +255,20 @@ export default class GameScene extends Phaser.Scene {
 
     // Half-backgrounds — slight colour difference left vs right, stop before hint area
     const gBg = this.add.graphics()
-    gBg.fillStyle(0x1c1c38, 1)
+    gBg.fillStyle(C.leftHalfBg, 1)
     gBg.fillRect(0, GRID_TOP_Y, W / 2, COLORS_BOTTOM_Y - GRID_TOP_Y)
-    gBg.fillStyle(0x1c2838, 1)
+    gBg.fillStyle(C.rightHalfBg, 1)
     gBg.fillRect(W / 2, GRID_TOP_Y, W / 2, COLORS_BOTTOM_Y - GRID_TOP_Y)
 
     // Centre divider — only within the active grid area
     const midX = GRID_OFFSET_X + COLS_PER_SIDE * CELL_SIZE
     const cdg = this.add.graphics()
-    cdg.lineStyle(3, 0xffffff, 0.25)
+    cdg.lineStyle(3, C.white, 0.25)
     cdg.lineBetween(midX, GRID_TOP_Y, midX, GRID_BOTTOM_Y)
 
     // Thick border at the bottom of the play field
     const fieldBase = this.add.graphics()
-    fieldBase.lineStyle(4, 0xffffff, 0.45)
+    fieldBase.lineStyle(4, C.white, 0.45)
     fieldBase.lineBetween(GRID_OFFSET_X, GRID_BOTTOM_Y, GRID_OFFSET_X + GRID_COLS * CELL_SIZE, GRID_BOTTOM_Y)
   }
 

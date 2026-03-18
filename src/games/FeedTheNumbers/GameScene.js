@@ -411,7 +411,7 @@ export default class GameScene extends Phaser.Scene {
 
     // White flash on the ellipse
     const flash = this.add.graphics()
-    flash.fillStyle(0xffffff, 0.45)
+    flash.fillStyle(C.white, 0.45)
     flash.fillEllipse(ellipseX, HUNGRY_Y, HUNGRY_RX * 2, HUNGRY_RY * 2)
     this.tweens.add({
       targets: flash,

@@ -102,7 +102,14 @@ export function dotColor(i, flash) {
 //   hidePlayerDot   – when true, skips the dot at the last node if no flash is
 //                     active (use in games that draw the player marker separately
 //                     on top of the current position)
-export function PathLayer({ displayHistory, flash, toSvgCoord, hidePlayerDot = false }) {
+//   getSegColor     – optional function(segIndex: number) => cssColor string.
+//                     When provided, overrides the default flash-based segment
+//                     coloring. Useful for validation-coloured paths (e.g.
+//                     NumberLabyrinth) where flash is always null.
+//   getDotColor     – optional function(dotIndex: number) => cssColor string.
+//                     dotIndex is 1-based (matches the slice(1) iteration).
+//                     When provided, overrides the default flash-based dot color.
+export function PathLayer({ displayHistory, flash, toSvgCoord, hidePlayerDot = false, getSegColor, getDotColor }) {
   if (displayHistory.length <= 1) return null
   const { xOffsets, yOffsets } = computeSegmentOffsets(displayHistory)
 
@@ -117,7 +124,7 @@ export function PathLayer({ displayHistory, flash, toSvgCoord, hidePlayerDot = f
         const x1 = x1b + xOff, y1 = y1b + yOff
         const x2 = x2b + xOff, y2 = y2b + yOff
         const inRepeat = flash && i >= flash.start && i < flash.start + 2 * flash.unitLen
-        const color   = segColor(i, flash)
+        const color   = getSegColor ? getSegColor(i) : segColor(i, flash)
         const sw      = flash ? 0.08 : 0.055
         const opacity = flash ? (inRepeat ? 1 : 0.28) : 0.85
         const lx1 = x1 + 0.20 * (x2 - x1),  ly1 = y1 + 0.20 * (y2 - y1)
@@ -151,7 +158,7 @@ export function PathLayer({ displayHistory, flash, toSvgCoord, hidePlayerDot = f
             key={`dot-${i}`}
             cx={cx} cy={cy}
             r={isProposed ? 0.2 : 0.1}
-            fill={dotColor(i, flash)}
+            fill={getDotColor ? getDotColor(i) : dotColor(i, flash)}
             opacity={flash ? (inRepeat ? (isProposed ? 0.65 : 1) : 0.25) : 1}
             style={{ pointerEvents: 'none' }}
           />
