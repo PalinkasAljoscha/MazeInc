@@ -257,7 +257,7 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const vbH  = rows + 2 * pad
 
   // Font size scaled down for larger boards to keep numbers readable
-  const fontSize = cols <= 5 ? 0.36 : cols <= 7 ? 0.30 : 0.26
+  const fontSize = cols <= 5 ? 0.36 : cols <= 7 ? 0.30 : 0.30
 
   // ── Path color helpers for validation state ──────────────────────────────
   // Passed to PathLayer as getSegColor / getDotColor overrides so that segments
