@@ -324,25 +324,6 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
             })
           )}
 
-          {/* ── Numbers ── */}
-          {Array.from({ length: rows }, (_, row) =>
-            Array.from({ length: cols }, (_, col) => {
-              const light = (col + row) % 2 === 0
-              return (
-                <text
-                  key={`num-${col}-${row}`}
-                  x={col + 0.5} y={row + 0.5}
-                  textAnchor="middle" dominantBaseline="central"
-                  fontSize={fontSize} fontWeight="bold"
-                  fill={light ? palette.boardTextDark : palette.boardTextLight}
-                  style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Arial, sans-serif' }}
-                >
-                  {grid[row][col]}
-                </text>
-              )
-            })
-          )}
-
           {/* ── Start marker: green flag (top-left, tilted 50° left outside board) ── */}
           {(() => {
             const sq = 0.095
@@ -404,13 +385,32 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
             getDotColor={getDotColor}
           />
 
-          {/* ── Player position: transparent blue overlay on current cell ── */}
+          {/* ── Player position: opaque blue circle filling the current cell ── */}
           {!won && (
-            <rect
-              x={pos[0]} y={pos[1]} width={1} height={1}
-              fill={palette.objBasicBlue} opacity={0.28}
+            <circle
+              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.5}
+              fill={palette.objBasicBlue}
               style={{ pointerEvents: 'none' }}
             />
+          )}
+
+          {/* ── Numbers (rendered last so they always appear above path and player marker) ── */}
+          {Array.from({ length: rows }, (_, row) =>
+            Array.from({ length: cols }, (_, col) => {
+              const light = (col + row) % 2 === 0
+              return (
+                <text
+                  key={`num-${col}-${row}`}
+                  x={col + 0.5} y={row + 0.5}
+                  textAnchor="middle" dominantBaseline="central"
+                  fontSize={fontSize} fontWeight="bold"
+                  fill={light ? palette.boardTextDark : palette.boardTextLight}
+                  style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Arial, sans-serif' }}
+                >
+                  {grid[row][col]}
+                </text>
+              )
+            })
           )}
         </svg>
       </div>
