@@ -386,12 +386,12 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
           />
 
           {/* ── Player position: blue ring on current cell ──
-               Outer diameter = 98% of field width  → outer r = 0.49
-               Inner diameter = 93% of total         → inner r = 0.93 × 0.49 = 0.4557
-               SVG stroke circle: r = midpoint = 0.473, strokeWidth = 0.034        ── */}
+               Outer diameter ≈ 95% of field width  → outer r ≈ 0.476
+               Inner diameter = 93% of total         → inner r ≈ 0.442
+               SVG stroke circle: r = midpoint = 0.459, strokeWidth = 0.034        ── */}
           {!won && (
             <circle
-              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.473}
+              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.459}
               fill="none"
               stroke={palette.objBasicBlue} strokeWidth={0.034}
               style={{ pointerEvents: 'none' }}
