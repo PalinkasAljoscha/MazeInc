@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
-import TouchButton from '../../components/TouchButton.jsx'
 
 // ── Level config ───────────────────────────────────────────────────────────────
 const LEVELS = {
@@ -179,6 +178,8 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const atGoal = pos[0] === cols - 1 && pos[1] === rows - 1
 
   // ── Movement ─────────────────────────────────────────────────────────────
+  // Moving in the opposite direction of the previous move undoes that move
+  // instead of adding a new step.
   const tryMove = useCallback((dir) => {
     if (validated) return
     const DELTAS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] }
@@ -186,9 +187,18 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     const [c, r] = pos
     const nc = c + dc, nr = r + dr
     if (nc < 0 || nc >= cols || nr < 0 || nr >= rows) return
+    // Undo: target cell is where we came from (second-to-last in history)
+    if (history.length >= 2) {
+      const [pc, pr] = history[history.length - 2]
+      if (nc === pc && nr === pr) {
+        setPos([pc, pr])
+        setHistory(h => h.slice(0, -1))
+        return
+      }
+    }
     setPos([nc, nr])
     setHistory(h => [...h, [nc, nr]])
-  }, [pos, validated, cols, rows])
+  }, [pos, validated, cols, rows, history])
 
   // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -247,7 +257,7 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const vbH  = rows + 2 * pad
 
   // Font size scaled down for larger boards to keep numbers readable
-  const fontSize = cols <= 5 ? 0.36 : cols <= 7 ? 0.30 : 0.26
+  const fontSize = cols <= 5 ? 0.36 : cols <= 7 ? 0.30 : 0.30
 
   // ── Path color helpers for validation state ──────────────────────────────
   // Passed to PathLayer as getSegColor / getDotColor overrides so that segments
@@ -324,25 +334,6 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
             })
           )}
 
-          {/* ── Numbers ── */}
-          {Array.from({ length: rows }, (_, row) =>
-            Array.from({ length: cols }, (_, col) => {
-              const light = (col + row) % 2 === 0
-              return (
-                <text
-                  key={`num-${col}-${row}`}
-                  x={col + 0.5} y={row + 0.5}
-                  textAnchor="middle" dominantBaseline="central"
-                  fontSize={fontSize} fontWeight="bold"
-                  fill={light ? palette.boardTextDark : palette.boardTextLight}
-                  style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Arial, sans-serif' }}
-                >
-                  {grid[row][col]}
-                </text>
-              )
-            })
-          )}
-
           {/* ── Start marker: green flag (top-left, tilted 50° left outside board) ── */}
           {(() => {
             const sq = 0.095
@@ -404,30 +395,41 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
             getDotColor={getDotColor}
           />
 
-          {/* ── Player position: transparent blue overlay on current cell ── */}
+          {/* ── Player position: blue ring on current cell ──
+               Outer diameter ≈ 95% of field width  → outer r ≈ 0.476
+               Inner diameter = 93% of total         → inner r ≈ 0.442
+               SVG stroke circle: r = midpoint = 0.459, strokeWidth = 0.034        ── */}
           {!won && (
-            <rect
-              x={pos[0]} y={pos[1]} width={1} height={1}
-              fill={palette.objBasicBlue} opacity={0.28}
+            <circle
+              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.436}
+              fill="none"
+              stroke={palette.objBasicBlue} strokeWidth={0.034}
               style={{ pointerEvents: 'none' }}
             />
+          )}
+
+          {/* ── Numbers (rendered last so they always appear above path and player marker) ── */}
+          {Array.from({ length: rows }, (_, row) =>
+            Array.from({ length: cols }, (_, col) => {
+              const light = (col + row) % 2 === 0
+              return (
+                <text
+                  key={`num-${col}-${row}`}
+                  x={col + 0.5} y={row + 0.5}
+                  textAnchor="middle" dominantBaseline="central"
+                  fontSize={fontSize} fontWeight="bold"
+                  fill={light ? palette.boardTextDark : palette.boardTextLight}
+                  style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'Arial, sans-serif' }}
+                >
+                  {grid[row][col]}
+                </text>
+              )
+            })
           )}
         </svg>
       </div>
 
-      {/* ── Touch controls (D-pad) ── */}
-      <div className="shrink-0 pb-2 pt-1">
-        <div className="grid grid-cols-3 gap-1" style={{ width: 136 }}>
-          <div />
-          <TouchButton onPress={() => tryMove('U')} label="↑" color="bg-gray-600" />
-          <div />
-          <TouchButton onPress={() => tryMove('L')} label="←" color="bg-gray-600" />
-          <TouchButton onPress={() => tryMove('D')} label="↓" color="bg-gray-600" />
-          <TouchButton onPress={() => tryMove('R')} label="→" color="bg-gray-600" />
-        </div>
-      </div>
-
-      {/* ── Win overlay ── */}
+{/* ── Win overlay ── */}
       {won && (
         <div
           className="absolute inset-0 flex items-center justify-center"
