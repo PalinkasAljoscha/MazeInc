@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
-import TouchButton from '../../components/TouchButton.jsx'
 
 // ── Level config ───────────────────────────────────────────────────────────────
 const LEVELS = {
@@ -419,19 +418,7 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
         </svg>
       </div>
 
-      {/* ── Touch controls (D-pad) ── */}
-      <div className="shrink-0 pb-2 pt-1">
-        <div className="grid grid-cols-3 gap-1" style={{ width: 136 }}>
-          <div />
-          <TouchButton onPress={() => tryMove('U')} label="↑" color="bg-gray-600" />
-          <div />
-          <TouchButton onPress={() => tryMove('L')} label="←" color="bg-gray-600" />
-          <TouchButton onPress={() => tryMove('D')} label="↓" color="bg-gray-600" />
-          <TouchButton onPress={() => tryMove('R')} label="→" color="bg-gray-600" />
-        </div>
-      </div>
-
-      {/* ── Win overlay ── */}
+{/* ── Win overlay ── */}
       {won && (
         <div
           className="absolute inset-0 flex items-center justify-center"
