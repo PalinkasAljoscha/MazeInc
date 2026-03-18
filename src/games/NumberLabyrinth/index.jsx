@@ -385,11 +385,15 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
             getDotColor={getDotColor}
           />
 
-          {/* ── Player position: opaque blue circle filling the current cell ── */}
+          {/* ── Player position: blue ring on current cell ──
+               Outer diameter = 98% of field width  → outer r = 0.49
+               Inner diameter = 93% of total         → inner r = 0.93 × 0.49 = 0.4557
+               SVG stroke circle: r = midpoint = 0.473, strokeWidth = 0.034        ── */}
           {!won && (
             <circle
-              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.5}
-              fill={palette.objBasicBlue}
+              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.473}
+              fill="none"
+              stroke={palette.objBasicBlue} strokeWidth={0.034}
               style={{ pointerEvents: 'none' }}
             />
           )}
