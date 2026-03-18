@@ -55,7 +55,7 @@ public/
 - **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
 - **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names. This ensures the app works correctly when published to any subdirectory or hosting provider.
 - **Shared components** — Never re-implement `TouchButton` inside a game wrapper. Always import from `src/components/TouchButton.jsx`. For sequence/path games that draw a move history in SVG, use `<PathLayer>` from `src/games/shared/pathViz.jsx` rather than duplicating the rendering logic.
-- **Prototyping folder** — `prototyping/` contains exploratory simulations and rough sketches. Never import from or copy code directly from this folder into the app. It may be read as reference to understand intended logic, but all app code must be written cleanly from scratch.
+- **Analysis folder** — `analysis/` contains all outside-of-app experimentation, analysis notebooks, and exploratory simulations. Never import from or copy code directly from this folder into the app. It may be read as reference to understand intended logic, but all app code must be written cleanly from scratch.
 
 ---
 
