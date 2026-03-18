@@ -391,7 +391,7 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
                SVG stroke circle: r = midpoint = 0.459, strokeWidth = 0.034        ── */}
           {!won && (
             <circle
-              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.459}
+              cx={pos[0] + 0.5} cy={pos[1] + 0.5} r={0.436}
               fill="none"
               stroke={palette.objBasicBlue} strokeWidth={0.034}
               style={{ pointerEvents: 'none' }}
