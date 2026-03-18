@@ -12,21 +12,28 @@ import { palette } from '../../theme.js'
 // overlap and need spreading. Segments that merely share a row or column but
 // connect different cells are NOT grouped together.
 //
-// Symmetric spread formula (k = order of first appearance, 0-based):
-//   offset[k] = ((count − 1) / 2 − k) × SPREAD
+// Stacking is capped at MAX_STACKED (4) lanes. Once 4 segments share an edge
+// the spread positions are fixed; any further segments beyond the cap cycle
+// through the same 4 positions so the visualization does not change further.
+//
+// Symmetric spread formula (k = slot index, 0-based, capped at MAX_STACKED):
+//   offset[k] = ((lanes − 1) / 2 − k) × SPREAD   where lanes = min(count, MAX_STACKED)
 //
 // Examples (SPREAD = 0.18 SVG units):
 //   count 1: [0]
 //   count 2: [+0.09, −0.09]
 //   count 3: [+0.18,  0,  −0.18]
-//   count 4: [+0.27, +0.09, −0.09, −0.27]
+//   count 4+: [+0.27, +0.09, −0.09, −0.27]  (fixed; 5th+ segments cycle these slots)
 
 const SPREAD = 0.18
+const MAX_STACKED = 4
 
 function applySpread(segIndices, offsets) {
   const count = segIndices.length
+  const lanes = Math.min(count, MAX_STACKED)
   for (let k = 0; k < count; k++) {
-    offsets[segIndices[k]] = ((count - 1) / 2 - k) * SPREAD
+    const slot = k % lanes   // segments beyond the cap reuse existing slots
+    offsets[segIndices[k]] = ((lanes - 1) / 2 - slot) * SPREAD
   }
 }
 
