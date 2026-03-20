@@ -4,12 +4,12 @@ import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
 
 // ── Level config ───────────────────────────────────────────────────────────────
-const LEVELS = {
-  1: { cols: 4, rows: 5, minVal: 0, maxVal: 120 },
-  2: { cols: 5, rows: 5, minVal: 0, maxVal: 300 },
-  3: { cols: 6, rows: 6, minVal: 0, maxVal: 500 },
-  4: { cols: 7, rows: 7, minVal: 0, maxVal: 700 },
-  5: { cols: 8, rows: 8, minVal: 8, maxVal: 999 },
+const LEVEL_CONFIGS = {
+  1: { cols: 4, rows: 4, pathMinStep: 3,  pathMaxStep: 10, fillMinStep: 1, fillMaxStep: 7,  minPct: 0.35, maxPct: 0.45, globalMin: 1, globalMax: 100,  pHigher: 0.75 },
+  2: { cols: 5, rows: 5, pathMinStep: 4,  pathMaxStep: 14, fillMinStep: 1, fillMaxStep: 10, minPct: 0.35, maxPct: 0.45, globalMin: 1, globalMax: 150,  pHigher: 0.75 },
+  3: { cols: 6, rows: 6, pathMinStep: 5,  pathMaxStep: 20, fillMinStep: 1, fillMaxStep: 20, minPct: 0.35, maxPct: 0.45, globalMin: 1, globalMax: 350,  pHigher: 0.75 },
+  4: { cols: 7, rows: 7, pathMinStep: 6,  pathMaxStep: 25, fillMinStep: 1, fillMaxStep: 30, minPct: 0.35, maxPct: 0.45, globalMin: 1, globalMax: 700,  pHigher: 0.75 },
+  5: { cols: 8, rows: 8, pathMinStep: 7,  pathMaxStep: 30, fillMinStep: 1, fillMaxStep: 40, minPct: 0.35, maxPct: 0.45, globalMin: 1, globalMax: 999,  pHigher: 0.75 },
 }
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]]
@@ -29,144 +29,166 @@ function shuffle(arr) {
   return a
 }
 
-// ── Solution path generation ───────────────────────────────────────────────────
-// Generates a path from (0,0) to (cols-1, rows-1) of exactly targetLen cells.
-// Uses biased random walk with backtracking-safe pruning.
-function generateSolutionPath(cols, rows, targetLen) {
-  const gcol = cols - 1, grow = rows - 1
+// ── Board generation helpers ───────────────────────────────────────────────────
+function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)) }
 
-  function dist(c, r) {
-    return Math.abs(gcol - c) + Math.abs(grow - r)
+// Iterative DFS from (0,0) to (cols-1,rows-1). No-adjacent-visited pruning keeps
+// the path from touching itself (maze-like). Returns [[c,r], ...] or null.
+function generateSolutionPathDfs(cols, rows, minLength, maxLength) {
+  const goalKey = `${cols - 1},${rows - 1}`
+
+  function manhattan(c, r) {
+    return Math.abs((cols - 1) - c) + Math.abs((rows - 1) - r)
   }
 
-  for (let attempt = 0; attempt < 500; attempt++) {
-    const path = [[0, 0]]
-    const visited = new Set(['0,0'])
-    let c = 0, r = 0
+  const stack = [{ pos: [0, 0], visited: new Set(['0,0']), path: [[0, 0]] }]
 
-    while (path.length < targetLen) {
-      const left = targetLen - path.length
-      const d = dist(c, r)
+  while (stack.length > 0) {
+    const { pos, visited, path } = stack.pop()
+    const [c, r] = pos
+    const cands = shuffle(getNeighbors(c, r, cols, rows))
 
-      if (d === 0) break // arrived at goal before filling targetLen
+    for (const [nc, nr] of cands) {
+      const ncKey = `${nc},${nr}`
+      if (visited.has(ncKey)) continue
 
-      // Only consider neighbors that still allow reaching goal within remaining steps
-      const cands = getNeighbors(c, r, cols, rows)
-        .filter(([nc, nr]) => !visited.has(`${nc},${nr}`) && dist(nc, nr) <= left - 1)
+      // No-adjacent-visited pruning: no neighbor of (nc,nr) other than current pos is visited
+      const hasAdjacentVisited = getNeighbors(nc, nr, cols, rows).some(([nnc, nnr]) => {
+        const k = `${nnc},${nnr}`
+        return k !== `${c},${r}` && visited.has(k)
+      })
+      if (hasAdjacentVisited) continue
 
-      if (cands.length === 0) break
+      const newLen = path.length + 1
+      if (newLen + manhattan(nc, nr) > maxLength) continue
 
-      const pool = shuffle(cands)
-      // When very close to needing to commit toward goal, bias toward it
-      if (left - d <= 3) pool.sort((a, b) => dist(a[0], a[1]) - dist(b[0], b[1]))
+      const newPath = [...path, [nc, nr]]
+      const newVisited = new Set(visited)
+      newVisited.add(ncKey)
 
-      const [nc, nr] = pool[0]
-      visited.add(`${nc},${nr}`)
-      c = nc; r = nr
-      path.push([c, r])
+      if (ncKey === goalKey) {
+        if (newLen >= minLength) return newPath
+        // too short — don't add to stack
+      } else {
+        stack.push({ pos: [nc, nr], visited: newVisited, path: newPath })
+      }
     }
-
-    if (c === gcol && r === grow && path.length === targetLen) return path
   }
-
-  // Fallback: simple L-shaped path
-  const path = [[0, 0]]
-  let pc = 0, pr = 0
-  while (pc < cols - 1) { pc++; path.push([pc, pr]) }
-  while (pr < rows - 1) { pr++; path.push([pc, pr]) }
-  return path
+  return null
 }
 
-// ── Board number generation ────────────────────────────────────────────────────
-// Implements the 4-step filling algorithm described in the game spec.
-function getFieldNumbers(cols, rows, minVal, maxVal) {
-  const T = cols * rows
-  const K = maxVal
-  const minLen = Math.floor(0.35 * T)
-  const maxLen = Math.floor(0.55 * T)
-
-  // Try increasing path lengths until one succeeds
-  let solutionPath = null
-  for (let len = minLen; len <= maxLen && !solutionPath; len++) {
-    const p = generateSolutionPath(cols, rows, len)
-    if (p[p.length - 1][0] === cols - 1 && p[p.length - 1][1] === rows - 1) {
-      solutionPath = p
-    }
+// Assigns strictly increasing values to each cell in the path.
+function assignPathValues(path, pathMinStep, pathMaxStep, globalMin) {
+  const baseVal = randInt(globalMin, globalMin + 19)
+  const values = new Map()
+  let current = baseVal
+  for (const [c, r] of path) {
+    values.set(`${c},${r}`, current)
+    current += randInt(pathMinStep, pathMaxStep)
   }
-  if (!solutionPath) {
-    solutionPath = [[0, 0]]
-    let pc = 0, pr = 0
-    while (pc < cols - 1) { pc++; solutionPath.push([pc, pr]) }
-    while (pr < rows - 1) { pr++; solutionPath.push([pc, pr]) }
-  }
+  return values
+}
 
-  // Step 1: assign strictly ascending numbers to solution path
-  const L = solutionPath.length
-  const uniqueVals = new Set()
-  let att = 0
-  while (uniqueVals.size < L && att < 200000) {
-    uniqueVals.add(minVal + Math.floor(Math.random() * (maxVal - minVal + 1)))
-    att++
-  }
-  const pathNumbers = [...uniqueVals].sort((a, b) => a - b)
-  while (pathNumbers.length < L) pathNumbers.push(pathNumbers[pathNumbers.length - 1] + 1)
+// BFS-wave fill: expands outward from the path, assigning values based on
+// neighbor count and label (A = ascending side, B = descending side).
+function fillBoard(cols, rows, path, pathValues, pHigher, fillMinStep, fillMaxStep, globalMin, globalMax) {
+  const board = new Map(pathValues)
+  const labels = new Map()
+  for (const key of pathValues.keys()) labels.set(key, 'A')
 
-  const grid = Array.from({ length: rows }, () => new Array(cols).fill(null))
-  const pathSet = new Set()
-  for (let i = 0; i < solutionPath.length; i++) {
-    const [c, r] = solutionPath[i]
-    grid[r][c] = pathNumbers[i]
-    pathSet.add(`${c},${r}`)
-  }
+  function sampleStep() { return randInt(fillMinStep, fillMaxStep) }
+  function clamp(v) { return Math.max(globalMin, Math.min(globalMax, v)) }
 
-  // Step 2: neighbors of path cells → random values < K/2
-  const step2Set = new Set()
-  for (const [c, r] of solutionPath) {
-    for (const [nc, nr] of getNeighbors(c, r, cols, rows)) {
-      if (grid[nr][nc] === null) {
-        grid[nr][nc] = Math.floor(Math.random() * (K / 2))
-        step2Set.add(`${nc},${nr}`)
+  while (board.size < cols * rows) {
+    const snapshot = new Set(board.keys())
+    const neighborBatch = new Set()
+    for (const key of snapshot) {
+      const [c, r] = key.split(',').map(Number)
+      for (const [nc, nr] of getNeighbors(c, r, cols, rows)) {
+        const nk = `${nc},${nr}`
+        if (!snapshot.has(nk)) neighborBatch.add(nk)
       }
     }
-  }
+    if (neighborBatch.size === 0) break
 
-  // Step 3: neighbors of step-2 cells → values strictly > their step-2 neighbors
-  for (const key of step2Set) {
-    const [c, r] = key.split(',').map(Number)
-    for (const [nc, nr] of getNeighbors(c, r, cols, rows)) {
-      if (grid[nr][nc] === null) {
-        let maxNeighbor = 0
-        for (const [nnc, nnr] of getNeighbors(nc, nr, cols, rows)) {
-          if (step2Set.has(`${nnc},${nnr}`)) {
-            maxNeighbor = Math.max(maxNeighbor, grid[nnr][nnc] ?? 0)
+    for (const cellKey of neighborBatch) {
+      const [c, r] = cellKey.split(',').map(Number)
+      const numberedNbrs = getNeighbors(c, r, cols, rows).filter(([nc, nr]) => snapshot.has(`${nc},${nr}`))
+      const nNbrs = numberedNbrs.length
+
+      let newVal, newLabel
+      if (nNbrs === 1) {
+        const nbrVal = board.get(`${numberedNbrs[0][0]},${numberedNbrs[0][1]}`)
+        if (Math.random() < pHigher) {
+          newVal = clamp(nbrVal + sampleStep()); newLabel = 'A'
+        } else {
+          newVal = clamp(nbrVal - sampleStep()); newLabel = 'B'
+        }
+      } else if (nNbrs === 2) {
+        const v0 = board.get(`${numberedNbrs[0][0]},${numberedNbrs[0][1]}`)
+        const v1 = board.get(`${numberedNbrs[1][0]},${numberedNbrs[1][1]}`)
+        const l0 = labels.get(`${numberedNbrs[0][0]},${numberedNbrs[0][1]}`)
+        const l1 = labels.get(`${numberedNbrs[1][0]},${numberedNbrs[1][1]}`)
+        const lo = Math.min(v0, v1), hi = Math.max(v0, v1)
+        if (l0 === 'A' && l1 === 'A') {
+          newVal = clamp(hi + sampleStep()); newLabel = 'B'
+        } else {
+          if (hi - lo >= 2) {
+            newVal = randInt(lo + 1, hi - 1); newLabel = 'A'
+          } else if (clamp(lo - sampleStep()) < lo) {
+            newVal = clamp(lo - sampleStep()); newLabel = 'B'
+          } else {
+            newVal = clamp(hi + sampleStep()); newLabel = 'A'
           }
         }
-        const minAllowed = maxNeighbor + 1
-        const range = maxVal - minAllowed
-        grid[nr][nc] = range > 0 ? minAllowed + Math.floor(Math.random() * range) : maxVal
+      } else {
+        const minAdj = Math.min(...numberedNbrs.map(([nc, nr]) => board.get(`${nc},${nr}`)))
+        newVal = clamp(minAdj - sampleStep()); newLabel = 'B'
       }
+
+      board.set(cellKey, newVal)
+      labels.set(cellKey, newLabel)
     }
   }
+  return board
+}
 
-  // Step 4: remaining cells → random values < K/2.2
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (grid[r][c] === null) {
-        grid[r][c] = Math.floor(Math.random() * (K / 2.2))
-      }
+// Top-level generator. Retries up to 20 times (DFS can return null when the
+// search space is exhausted before finding a path in the length window).
+function generateNumberLabyrinthBoard(cfg) {
+  const { cols, rows, minPct, maxPct, pHigher, pathMinStep, pathMaxStep, fillMinStep, fillMaxStep, globalMin, globalMax } = cfg
+  const T = cols * rows
+  const lo = Math.floor(minPct * T)
+  const hi = Math.floor(maxPct * T)
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const path = generateSolutionPathDfs(cols, rows, lo, hi)
+    if (!path) continue
+
+    const pathValues = assignPathValues(path, pathMinStep, pathMaxStep, globalMin)
+    const board = fillBoard(cols, rows, path, pathValues, pHigher, fillMinStep, fillMaxStep, globalMin, globalMax)
+
+    return {
+      grid: Array.from({ length: rows }, (_, r) =>
+        Array.from({ length: cols }, (_, c) => board.get(`${c},${r}`))),
+      path: path.map(([c, r]) => ({ col: c, row: r })),
     }
   }
-
-  return { grid, solutionPath }
+  return null
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function NumberLabyrinth({ level = 1, onComplete }) {
   const { t } = useTranslation()
-  const { cols, rows, minVal, maxVal } = LEVELS[level] ?? LEVELS[1]
+  const cfg = LEVEL_CONFIGS[level] ?? LEVEL_CONFIGS[1]
+  const { cols, rows } = cfg
 
   // Board is generated once on mount; remount (Start New) regenerates it.
-  const [boardData] = useState(() => getFieldNumbers(cols, rows, minVal, maxVal))
+  const [boardData] = useState(() => {
+    let result
+    do { result = generateNumberLabyrinthBoard(cfg) } while (!result)
+    return result
+  })
   const { grid } = boardData
 
   const [pos, setPos]               = useState([0, 0])
