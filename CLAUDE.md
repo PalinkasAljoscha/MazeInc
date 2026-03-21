@@ -7,6 +7,8 @@
 
 Primary school children and anyone interested to discover fun games related to math.
 
+See `GAMES.md` (project root) for per-game descriptions covering design idea, math concepts, target age, mood, and strategic context.
+
 ---
 
 ## Tech Stack
