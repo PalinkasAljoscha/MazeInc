@@ -55,9 +55,9 @@ public/
 - **Colors** — Never hardcode color values. Import from `src/theme.js`. Add new named colors there when needed; use `C.slotColors[i]` (8 available) for colored game objects.
 - **Strings** — Never hardcode visible text. Use `t()` everywhere. Add keys to all locale files for every new string.
 - **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
-- **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names. This ensures the app works correctly when published to any subdirectory or hosting provider.
+- **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names.
 - **Shared components** — Never re-implement `TouchButton` inside a game wrapper. Always import from `src/components/TouchButton.jsx`. For sequence/path games that draw a move history in SVG, use `<PathLayer>` from `src/games/shared/pathViz.jsx` rather than duplicating the rendering logic.
-- **Analysis folder** — `analysis/` contains all outside-of-app experimentation, analysis notebooks, and exploratory simulations. Never import from or copy code directly from this folder into the app. It may be read as reference to understand intended logic, but all app code must be written cleanly from scratch.
+- **Analysis folder** — `analysis/` contains outside-of-app experimentation only. Never import from it; read as reference only.
 
 ---
 
@@ -65,9 +65,9 @@ public/
 
 - `main` — always stable and deployable; never commit directly to this branch
 - `dev` — ongoing integration branch; merge feature branches here first
-- `feature/<short-description>` — one branch per feature or game (e.g. `feature/level-picker`, `feature/game2`)
+- `feature/<short-description>` — one branch per feature or game
 
-Always start a new session by creating or checking out the appropriate feature branch. Merge to `dev` when the feature is complete and tested, and to `main` only when `dev` is stable.
+Always start a new session by creating or checking out the appropriate feature branch. Merge to `dev` when complete and tested, to `main` only when `dev` is stable.
 
 ---
 
@@ -81,20 +81,22 @@ Always start a new session by creating or checking out the appropriate feature b
 
 Each game exports:
 ```jsx
-export default function MyGame({ level, onComplete }) { ... }
+export default function MyGame({ level, speed, onComplete }) { ... }
 export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 ```
 
 **Level system** — each game defines a `LEVELS` object in `GameScene.js` keyed by level number. The React wrapper passes the chosen level into Phaser via `game.registry.set('level', level)`; the scene reads it back in `create()` with `this.registry.get('level')`.
 
-**Speed system** — games that support variable speed set `hasSpeed: true` in the `GAMES` array in `App.jsx`. The home-page tile shows a range slider (1–5, default 4) labelled "fast" at the right end. The selected value is passed as a `speed` prop to the game component, which pushes it to Phaser via `game.registry.set('speed', speed)`. In `GameScene.js`, read it in `create()` with `this.registry.get('speed') ?? 4` and apply the shared multiplier table `SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]` (index = dial value 1–5) to a `*_BASE` constant so that dial 4 always matches the original design speed.
+**Speed system** — games that support variable speed set `hasSpeed: true` in the `GAMES` array in `App.jsx`. The selected value (1–5, default 4) is passed as a `speed` prop to the game component, which pushes it to Phaser via `game.registry.set('speed', speed)`. In `GameScene.js`, read it in `create()` with `this.registry.get('speed') ?? 4` and apply `SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]` (index = dial value) to a `*_BASE` constant so that dial 4 matches the original design speed.
 
-**Game header bar** — the header bar shown during play (in `App.jsx`) is a three-column flex row:
-- **Left** — `← Home` button + three-line game info (app name tiny/dimmed, `{emoji} {title}` large/bold, `Level {n} · Speed {n}` small/dimmed)
-- **Center** — `Start New` button (indigo); clicking increments `gameKey` which is passed as `key` to the `GameComponent`, forcing React to unmount/remount it and restart the Phaser game from scratch
-- **Right** — empty `flex-1` spacer to keep the center column truly centered
+**Home page tiles** — each game card is a compact horizontal strip: emoji top-left, `▶` play button top-right, game title + description (up to 3 lines) spanning full width below. No level/speed controls on the tile. Clicking `▶` opens the Settings popup.
 
-When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the game uses the speed registry value; omit it otherwise and the speed line is suppressed automatically.
+**Settings popup** — used both from the home page (`▶`) and during a game (`Change` button). Shows "Choose Difficulty" title, a `‹ N ›` picker for Level (always), and a second picker for Speed if `hasSpeed`. When both pickers are shown they stack vertically at ~65% size; a single picker is shown at full size. Buttons: **OK** always (starts a fresh game instance); **Cancel** only when opened during an active game (closes popup, game continues unchanged). Level and speed are never changed on a running game — OK always starts a new instance.
+
+**Game header bar** — three-column flex row:
+- **Left** — `← Home` button + three-line game info: app name (tiny/dimmed), `{emoji} {title}` (large/bold), `Level {n} · Speed {n}` (small/dimmed) + blue **Change** button inline
+- **Center** — `Start New` button (`palette.btnBlue`); restarts the game at the current level/speed without a popup
+- **Right** — empty `flex-1` spacer
 
 **Game-over popup (Time's up)** — all games with a timer must use the same popup layout:
 - Full-screen dark overlay (`C.overlayBlack`, alpha 0.75)
@@ -102,16 +104,16 @@ When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the ga
 - Title: `30px Arial Black`, `palette.scoreYellow`, at `H/2 - 95`
 - Score label: `20px Arial`, `palette.silverGray`, at `H/2 - 30`
 - Score value: `72px Arial Black`, `palette.correctGreen`, at `H/2 + 30`
-- Play Again button: rect `220×56` at `(W/2 - 110, H/2 + 90)`, rounded `16`, `C.btnBlue` / hover `C.btnBlueHover`; text `24px Arial Black` white at `(W/2, H/2 + 118)`; interactive zone same size
-- If a game needs an extra line (e.g. FeedTheNumbers "hungry numbers"), extend the panel height proportionally and shift the button down to keep the same internal spacing
-- The **Start New** button in the React header bar uses the same blue (`#3498db` / `#2980b9` hover) and `font-black` to stay visually consistent with the in-game Play Again button
+- Play Again button: rect `220×56` at `(W/2 - 110, H/2 + 90)`, rounded `16`, `C.btnBlue` / hover `C.btnBlueHover`; text `24px Arial Black` white at `(W/2, H/2 + 118)`
+- If a game needs an extra line, extend panel height proportionally and shift button down
+- The **Start New** and **Change** buttons in the React header use the same blue (`palette.btnBlue` / `palette.btnBlueHover`) and `font-black` to stay visually consistent with the in-game Play Again button
 
 **Adding a new game:**
 1. Create `src/games/MyGame/index.jsx` (React wrapper) and `GameScene.js` (Phaser scene with `LEVELS` config)
 2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
-3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx` — do not define a local copy
-4. Import the component and meta into `App.jsx`; add a single entry to the `GAMES` array that includes a `component` field (pointing to the imported component), `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, and `hasSpeed` if applicable — there is no separate `GAME_COMPONENTS` map
-5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json`
+3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx`
+4. Import component and meta into `App.jsx`; add a single entry to `GAMES` with `component`, `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, and `hasSpeed` if applicable
+5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json` and `fr.json`
 
 ---
 
@@ -127,6 +129,5 @@ When adding a new game, set `hasSpeed: true` in its `GAMES` entry only if the ga
 ## Notes / Open Decisions
 
 - Sound effects deferred (needs user gesture on mobile to unlock audio)
-- Game 2 to be defined after play-testing game 1
 
 *Update this file at the end of each session with decisions made.*

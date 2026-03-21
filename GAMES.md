@@ -70,7 +70,7 @@ Each entry covers context that cannot be inferred from the code alone: the desig
 
 **Mood:** Meditative and discovery-oriented. Alternates between flow and the mild frustration of a blocked move. Carries a genuine "I wonder if this is even possible" quality — made richer by knowing that mathematics says it is.
 
-**Description:** Can you climb forever without ever repeating yourself? Theoretically you can, but you will realize that it is not suiting our way of thinking and very difficult to realize. Hence you cannot win the game, you can just try to get as high as posisble with as few undos as you can. In 1906, Axel Thue proved that over an alphabet of three symbols, arbitrarily long square-free sequences exist: sequences in which no block of moves ever appears twice in a row. Ladder to Infinity has exactly three available moves — Up, Left, Right — so Thue's result guarantees that an infinite non-repeating climb is always possible in principle. The challenge is finding it. 
+**Description:** Can you climb forever without ever repeating yourself? Theoretically you can, but it's quite unintuitive and difficult. Hence you cannot win the game, you can just try to get as high as posisble with as few undos as you can. In 1906, Axel Thue proved that over an alphabet of three symbols, arbitrarily long square-free sequences exist: sequences in which no block of moves ever appears twice in a row. Ladder to Infinity has exactly three available moves — Up, Left, Right — so Thue's result guarantees that an infinite non-repeating climb is always possible in principle. The challenge is finding it. 
 
 ---
 
@@ -84,7 +84,21 @@ Each entry covers context that cannot be inferred from the code alone: the desig
 
 **Mood:** Concentrated and calm. The pace is entirely self-directed — no timer, no pressure. Close to a logic puzzle or a newspaper number maze.
 
-**Description:** You need to scan a board filled with numbers and trace a path from start to goal where each step climbs to a strictly larger neighbour. Because only the greater-than relation between natural numbers is involved, small boards can be played by young children who are just learning to compare numbers, while large boards with three-digit values offer a real challenge at any age. The maze framing makes comparison feel like exploration rather than drill.
+**Description:** You need to scan a board filled with numbers and trace a path from start to goal where each step climbs to a strictly larger neighbour. Because only the greater-than relation between natural numbers is involved, small boards can be played by young children who are just learning to compare numbers, while large boards with three-digit values offer a real challenge at any age. 
+
+---
+
+## At the restaurant 🔢
+
+**Idea:** You see the pictures representing the served foods with prices given, then given a table of serving need to lookup and sum up the total to pay. 
+
+**Math concepts:** Small numbers addition.
+
+**Skill prerequisite:** Reading small numbers only and adding them. No reading required otherwise.
+
+**Mood:** Playful and with many pictures.
+
+**Description:** For early practice of additions: the player sees a menu of foods at a restaurant with prices in small natural numbers. Each food is represented by an emoji picture. The player is then given a table with some of those foods from the menu served and needs to look up the prices on the menu and add up.
 
 ---
 
