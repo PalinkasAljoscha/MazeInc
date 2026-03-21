@@ -48,29 +48,29 @@ Each entry covers context that cannot be inferred from the code alone: the desig
 
 ## New Ways 🗺️
 
-**Idea:** The player navigates a character from the bottom-left corner to the top-right corner of a square grid using directional controls. The twist: the game tracks the sequence of moves (e.g. RRUURULR…) and rejects any move that would make the sequence contain a repeating sub-pattern (a loop). The player must reach the goal via a path whose move-sequence is non-periodic.
+**Idea:** The player navigates from the bottom-left corner to the top-right corner of a square grid using directional controls. The twist: the game tracks the full sequence of moves (e.g. RRUURULR…) and rejects any move that would make the sequence contain a repeated block — that is, any sub-sequence of the form XX where the same string appears twice in a row. The player must reach the goal via a path whose move-sequence is square-free. Because the grid allows four move directions, such paths are plentiful, and the puzzle becomes: can you find one that leads all the way to the goal?
 
-**Math concepts:** Sequences and periodicity; combinatorics of grid paths; the distinction between a path that visits no cell twice (simple path) and a sequence of moves that contains no repeated motif.
+**Math concepts:** Square-free sequences; combinatorics of grid paths; the distinction between a path that visits no cell twice (a simple path) and a move-sequence that contains no repeated block.
 
 **Skill prerequisite:** Spatial navigation on a grid; willingness to experiment and backtrack. No arithmetic required.
 
 **Mood:** Exploratory and puzzle-like. Quiet concentration. Moments of surprise when an apparently reasonable move is blocked. Can feel meditative.
 
-**Description:** Getting from A to B sounds simple — until you discover that walking in circles is forbidden, even hidden ones. New Ways trains pattern awareness in a purely spatial setting: no numbers, just direction. It introduces children (and curious adults) to the idea that sequences have structure, and that "not repeating yourself" is harder than it sounds. Larger grids offer a significant combinatorial challenge even for adults.
+**Description:** Getting from A to B sounds simple — until you discover that retracing any pattern, even a hidden one, is forbidden. With some patience you probably always reach the goal. The constraint is unintuitive it's annoying but also intriguing to overcome. In 1906 the Norwegian mathematician Axel Thue proved that arbitrarily long square-free sequences exist over an alphabet of just three symbols. New Ways puts this idea into a playable form: your sequence of moves must never contain a repeated block, and you still have to reach the far corner of the board.The game 'Ladder to Infinity' is a much more constrained and hence difficult version. 
 
 ---
 
 ## Ladder to Infinity 🪜
 
-**Idea:** The player climbs an infinite vertical strip (2 or 3 columns wide) by moving up, left, or right. The same non-periodicity rule applies as in New Ways: a move is rejected if it would make the total move-sequence contain a repeating sub-pattern. The score is the maximum height reached. The strip extends forever — the question is whether the player can keep climbing indefinitely or will eventually be forced into a loop.
+**Idea:** The player climbs an infinite vertical strip (2 or 3 columns wide) using exactly three moves: Up, Left, Right. The same square-free rule applies as in New Ways: a move is rejected if it would cause the total move-sequence to contain a repeated block XX. The score is the maximum height reached. The strip extends forever — and the key question the game poses is: can you keep climbing indefinitely, or must you eventually repeat yourself? Crucially, Thue's theorem answers this: because the available alphabet has exactly three symbols {U, L, R}, arbitrarily long square-free sequences are guaranteed to exist, so it is always theoretically possible to climb without limit.
 
-**Math concepts:** Infinite sequences; periodicity and aperiodicity; the combinatorial question of whether a non-periodic infinite path exists on a narrow grid. (On a 2-wide strip the answer is non-obvious and mathematically interesting.)
+**Math concepts:** Square-free sequences over a three-symbol alphabet; infinite combinatorics; Thue's 1906 theorem as the mathematical backbone of the game's possibility space.
 
-**Skill prerequisite:** Same spatial reasoning as New Ways, but willingness to think many moves ahead. No arithmetic required.
+**Skill prerequisite:** Same spatial reasoning as New Ways, but with a longer planning horizon. No arithmetic required. Older players may appreciate knowing the mathematical guarantee underneath the game.
 
-**Mood:** Meditative and discovery-oriented. Can alternate between flow and frustration. Invites a genuine "I wonder if this is even possible" feeling, which is rare in educational games.
+**Mood:** Meditative and discovery-oriented. Alternates between flow and the mild frustration of a blocked move. Carries a genuine "I wonder if this is even possible" quality — made richer by knowing that mathematics says it is.
 
-**Description:** Can you climb forever without ever falling into a pattern? Ladder to Infinity poses a real mathematical question in playable form. The narrow strip makes every move consequential, and the further you climb the harder it becomes to avoid repeating yourself. The game has an open-ended, exploratory quality — there is no fixed goal, only the challenge of going higher. It can spark genuine curiosity about sequences and infinity in older children and adults.
+**Description:** Can you climb forever without ever repeating yourself? Theoretically you can, but you will realize that it is not suiting our way of thinking and very difficult to realize. Hence you cannot win the game, you can just try to get as high as posisble with as few undos as you can. In 1906, Axel Thue proved that over an alphabet of three symbols, arbitrarily long square-free sequences exist: sequences in which no block of moves ever appears twice in a row. Ladder to Infinity has exactly three available moves — Up, Left, Right — so Thue's result guarantees that an infinite non-repeating climb is always possible in principle. The challenge is finding it. 
 
 ---
 
