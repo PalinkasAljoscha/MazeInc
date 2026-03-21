@@ -17,7 +17,11 @@
     "backButton": "← Accueil",
     "startNew": "Nouveau",
     "speed": "rapide",
-    "speedLabel": "Vitesse"
+    "speedLabel": "Vitesse",
+    "change": "Modifier",
+    "chooseDifficulty": "Choisir la difficulté",
+    "ok": "OK",
+    "cancel": "Annuler"
   },
   "games": {
     "multiplesCatcher": {

@@ -8,8 +8,6 @@ import Balance, { meta as balanceMeta } from './games/Balance'
 import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
 import NumberLabyrinth, { meta as numberLabyrinthMeta } from './games/NumberLabyrinth'
 
-const ALL_LEVELS = [1, 2, 3, 4, 5]
-
 const GAMES = [
   {
     id: 'multiples-catcher',
@@ -91,13 +89,6 @@ const GAMES = [
 // ── Game order ─────────────────────────────────────────────────────────────────
 // Set to 'random' to shuffle on every app start, or list IDs explicitly to fix
 // the order. Any enabled game not listed in the array appears at the end.
-// const GAME_ORDER = [
-//   'number-labyrinth',
-//   'balance',
-//   'multiples-catcher',
-//   'new-ways',
-//   'ladder',
-// ]
 const GAME_ORDER = 'random'
 
 const ORDERED_GAMES = (() => {
@@ -117,24 +108,105 @@ const ORDERED_GAMES = (() => {
   })
 })()
 
+// ── Picker wheel ───────────────────────────────────────────────────────────────
+// small=true reduces all dimensions by ~35% (used when two pickers are shown)
+function Picker({ label, value, min, max, onChange, small = false }) {
+  const btn   = small ? 'text-xl w-6 h-6 rounded-lg'   : 'text-3xl w-10 h-10 rounded-xl'
+  const val   = small ? 'text-3xl w-9'                  : 'text-5xl w-14'
+  const lbl   = small ? 'text-xs'                       : 'text-sm'
+  const gap   = small ? 'gap-2'                         : 'gap-3'
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className={`text-white/70 font-bold uppercase tracking-wide ${lbl}`}>{label}</div>
+      <div className={`flex items-center ${gap}`}>
+        <button
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+          className={`text-white font-black flex items-center justify-center bg-white/15 hover:bg-white/25 active:scale-90 transition-all disabled:opacity-25 disabled:cursor-not-allowed ${btn}`}
+        >
+          ‹
+        </button>
+        <span className={`text-white font-black text-center tabular-nums leading-none ${val}`}>
+          {value}
+        </span>
+        <button
+          onClick={() => onChange(Math.min(max, value + 1))}
+          disabled={value >= max}
+          className={`text-white font-black flex items-center justify-center bg-white/15 hover:bg-white/25 active:scale-90 transition-all disabled:opacity-25 disabled:cursor-not-allowed ${btn}`}
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Settings modal (level + speed selection) ───────────────────────────────────
+// settingsModal shape: { gameConfig, fromGame, pendingLevel, pendingSpeed }
+function SettingsModal({ modal, onUpdate, onOK, onCancel, t }) {
+  const { gameConfig, fromGame, pendingLevel, pendingSpeed } = modal
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-black/65 z-50">
+      <div className="bg-gray-800 border border-gray-600 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-6 mx-4 w-full max-w-xs">
+        {/* Title */}
+        <h2 className="text-white font-black text-xl text-center leading-tight">
+          {t('home.chooseDifficulty')}
+        </h2>
+
+        {/* Pickers — stacked vertically + smaller when both level and speed shown */}
+        <div className="flex flex-col items-center gap-4">
+          <Picker
+            label={t('levels.label')}
+            value={pendingLevel}
+            min={gameConfig.minLevel}
+            max={gameConfig.maxLevel}
+            onChange={(lvl) => onUpdate({ pendingLevel: lvl })}
+            small={gameConfig.hasSpeed}
+          />
+          {gameConfig.hasSpeed && (
+            <Picker
+              label={t('home.speedLabel')}
+              value={pendingSpeed}
+              min={1}
+              max={5}
+              onChange={(spd) => onUpdate({ pendingSpeed: spd })}
+              small
+            />
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3 w-full">
+          {fromGame && (
+            <button
+              onClick={onCancel}
+              className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-black text-lg rounded-xl py-2.5 transition-colors active:scale-95"
+            >
+              {t('home.cancel')}
+            </button>
+          )}
+          <button
+            onClick={onOK}
+            className="flex-1 text-white font-black text-lg rounded-xl py-2.5 transition-colors active:scale-95"
+            style={{ backgroundColor: palette.btnBlue }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = palette.btnBlue}
+          >
+            {t('home.ok')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Home page ──────────────────────────────────────────────────────────────────
 function HomePage({ onSelectGame }) {
   const { t, i18n } = useTranslation()
 
-  const [selectedLevels, setSelectedLevels] = useState(
-    Object.fromEntries(ORDERED_GAMES.map((g) => [g.id, g.minLevel]))
-  )
-  const [selectedSpeeds, setSelectedSpeeds] = useState(
-    Object.fromEntries(ORDERED_GAMES.filter((g) => g.hasSpeed).map((g) => [g.id, 4]))
-  )
-
-  const setLevel = (gameId, lvl) =>
-    setSelectedLevels((prev) => ({ ...prev, [gameId]: lvl }))
-  const setSpeed = (gameId, spd) =>
-    setSelectedSpeeds((prev) => ({ ...prev, [gameId]: spd }))
-
   return (
     <div className="relative w-screen h-screen flex flex-col items-center bg-gradient-to-b from-sky-400 to-blue-600 overflow-auto py-8 px-4">
-      {/* ── Language switcher ── */}
+      {/* Language switcher */}
       <div className="absolute top-4 right-4 flex gap-2">
         {['en', 'fr'].map((lang) => (
           <button
@@ -148,6 +220,7 @@ function HomePage({ onSelectGame }) {
           </button>
         ))}
       </div>
+
       {/* Title */}
       <div className="text-center mb-10">
         <div className="text-6xl mb-2">🧮</div>
@@ -160,109 +233,103 @@ function HomePage({ onSelectGame }) {
       </div>
 
       {/* Game cards */}
-      <div className="flex flex-col gap-5 w-full max-w-sm">
+      <div className="flex flex-col gap-3 w-full max-w-sm">
         {ORDERED_GAMES.map((game) => (
           <div
             key={game.id}
-            className={`
-              bg-gradient-to-br ${game.color} ${game.shadow}
-              rounded-3xl p-6 text-left shadow-xl
-              border-4 border-white/30
-            `}
+            className={`bg-gradient-to-br ${game.color} ${game.shadow} rounded-2xl px-4 pt-3 pb-4 shadow-xl border-4 border-white/30`}
           >
-            <div className="text-5xl mb-3">{game.emoji}</div>
-            <h2 className="text-2xl font-black text-white mb-1">{t(game.titleKey)}</h2>
-            <p className="text-white/90 font-semibold text-sm leading-snug">
+            {/* Top row: emoji left, play button right */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-4xl">{game.emoji}</div>
+              <button
+                onClick={() => onSelectGame(game)}
+                className="bg-white/25 hover:bg-white/35 active:scale-95 rounded-xl p-3 text-white text-xl font-black transition-all duration-100"
+                aria-label={t('home.play')}
+              >
+                ▶
+              </button>
+            </div>
+            <h2 className="text-xl font-black text-white leading-tight mb-1">{t(game.titleKey)}</h2>
+            <p className="text-white/80 text-xs font-semibold leading-snug line-clamp-3">
               {t(game.descKey)}
             </p>
-
-            {/* Level selector */}
-            <p className="text-white/70 text-xs font-bold mt-3 mb-1.5">
-              {t('levels.label')}
-            </p>
-            <div className="flex gap-1.5">
-              {ALL_LEVELS.map((lvl) => {
-                const supported = lvl >= game.minLevel && lvl <= game.maxLevel
-                const selected = selectedLevels[game.id] === lvl
-                return (
-                  <button
-                    key={lvl}
-                    disabled={!supported}
-                    onClick={() => setLevel(game.id, lvl)}
-                    className={`
-                      flex-1 rounded-xl py-1.5 px-0.5 text-center transition-colors
-                      ${selected
-                        ? 'bg-white text-gray-800 shadow'
-                        : supported
-                        ? 'bg-white/20 text-white hover:bg-white/30'
-                        : 'bg-black/10 text-white/25 cursor-not-allowed'}
-                    `}
-                  >
-                    <div className="text-xs font-black">{lvl}</div>
-                    <div className="text-[8px] leading-tight font-semibold break-words">
-                      {t(`levels.${lvl}`)}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="mt-4 flex items-end justify-between gap-3">
-              <button
-                onClick={() => onSelectGame(game.id, selectedLevels[game.id], selectedSpeeds[game.id])}
-                className="bg-white/25 rounded-2xl px-5 py-2 text-white font-black text-lg active:scale-95 transition-transform duration-100"
-              >
-                {t('home.play')}
-              </button>
-
-              {game.hasSpeed && (
-                <div className="flex items-center gap-2 pb-1">
-                  <input
-                    type="range"
-                    min="1" max="5" step="1"
-                    value={selectedSpeeds[game.id]}
-                    onChange={(e) => setSpeed(game.id, Number(e.target.value))}
-                    className="w-24 accent-white cursor-pointer"
-                  />
-                  <span className="text-white/70 text-xs font-bold">{t('home.speed')}</span>
-                </div>
-              )}
-            </div>
           </div>
         ))}
 
-        {/* Placeholder for future games */}
-        <div className="rounded-3xl p-6 border-4 border-dashed border-white/40 text-center opacity-60">
-          <div className="text-4xl mb-2">🔜</div>
-          <p className="text-white font-black text-lg">{t('home.comingSoon')}</p>
+        {/* Placeholder */}
+        <div className="rounded-2xl p-4 border-4 border-dashed border-white/40 text-center opacity-60">
+          <div className="text-3xl mb-1">🔜</div>
+          <p className="text-white font-black text-base">{t('home.comingSoon')}</p>
         </div>
       </div>
     </div>
   )
 }
 
+// ── App root ───────────────────────────────────────────────────────────────────
 export default function App() {
   const { t } = useTranslation()
-  const [activeGame, setActiveGame] = useState(null)
+
+  // Active game state — only ever mutated together via startGame()
+  const [activeGame, setActiveGame]   = useState(null)
   const [activeLevel, setActiveLevel] = useState(null)
   const [activeSpeed, setActiveSpeed] = useState(4)
-  const [gameKey, setGameKey] = useState(0)
+  const [gameKey, setGameKey]         = useState(0)
 
-  function handleSelectGame(gameId, level, speed = 4) {
-    setActiveGame(gameId)
+  // Settings modal: null | { gameConfig, fromGame, pendingLevel, pendingSpeed }
+  const [settingsModal, setSettingsModal] = useState(null)
+
+  // Always start a completely fresh game instance — never mutate a running game
+  function startGame(gameConfig, level, speed) {
+    setActiveGame(gameConfig.id)
     setActiveLevel(level)
     setActiveSpeed(speed)
+    setGameKey((k) => k + 1)
+    setSettingsModal(null)
+  }
+
+  function openSettingsFromHome(gameConfig) {
+    setSettingsModal({
+      gameConfig,
+      fromGame: false,
+      pendingLevel: gameConfig.minLevel,
+      pendingSpeed: 4,
+    })
+  }
+
+  function openSettingsFromGame() {
+    setSettingsModal({
+      gameConfig: activeGameConfig,
+      fromGame: true,
+      pendingLevel: activeLevel,
+      pendingSpeed: activeSpeed,
+    })
+  }
+
+  function handleSettingsUpdate(patch) {
+    setSettingsModal((prev) => ({ ...prev, ...patch }))
+  }
+
+  function handleSettingsOK() {
+    startGame(settingsModal.gameConfig, settingsModal.pendingLevel, settingsModal.pendingSpeed)
+  }
+
+  function handleSettingsCancel() {
+    setSettingsModal(null)
   }
 
   const activeGameConfig = activeGame ? GAMES.find((g) => g.id === activeGame) : null
   const GameComponent = activeGameConfig?.component ?? null
+
+  // ── Game view ──────────────────────────────────────────────────────────────
   if (GameComponent) {
     const game = activeGameConfig
     return (
       <div className="w-screen h-screen flex flex-col bg-gray-900">
         {/* Header bar */}
         <div className="flex items-center px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
-          {/* Left: Home button + game info */}
+          {/* Left: Home + game info + Change button */}
           <div className="flex items-center gap-3 flex-1">
             <button
               onClick={() => setActiveGame(null)}
@@ -272,19 +339,32 @@ export default function App() {
             </button>
             <div>
               <div className="text-white/60 text-xs font-bold leading-none">{t('app.name')}</div>
-              <h1 className="text-white font-black text-xl leading-tight">{game.emoji} {t(game.titleKey)}</h1>
-              <div className="text-white/50 text-xs font-semibold leading-tight mt-0.5">
-                {t('levels.label')} {activeLevel}
-                {game.hasSpeed && ` · ${t('home.speedLabel')} ${activeSpeed}`}
+              <h1 className="text-white font-black text-xl leading-tight">
+                {game.emoji} {t(game.titleKey)}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-white/50 text-xs font-semibold">
+                  {t('levels.label')} {activeLevel}
+                  {game.hasSpeed && ` · ${t('home.speedLabel')} ${activeSpeed}`}
+                </span>
+                <button
+                  onClick={openSettingsFromGame}
+                  className="text-white font-black text-xs px-2 py-0.5 rounded-lg active:scale-95 transition-all"
+                  style={{ backgroundColor: palette.btnBlue }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = palette.btnBlue}
+                >
+                  {t('home.change')}
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Center: Start New button */}
+          {/* Center: Start New */}
           <div className="flex justify-center flex-1">
             <button
-              onClick={() => setGameKey((k) => k + 1)}
-              className="text-white font-black text-xl rounded-2xl px-6 py-2 transition-colors active:scale-95 transition-transform duration-100"
+              onClick={() => startGame(game, activeLevel, activeSpeed)}
+              className="text-white font-black text-xl rounded-2xl px-6 py-2 active:scale-95 transition-transform duration-100"
               style={{ backgroundColor: palette.btnBlue }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = palette.btnBlue}
@@ -293,11 +373,11 @@ export default function App() {
             </button>
           </div>
 
-          {/* Right: spacer to keep center truly centered */}
+          {/* Right: spacer */}
           <div className="flex-1" />
         </div>
 
-        {/* Game fills remaining space */}
+        {/* Game canvas */}
         <div className="flex-1 min-h-0">
           <GameComponent
             key={gameKey}
@@ -306,9 +386,34 @@ export default function App() {
             onComplete={(result) => console.log('Game complete', result)}
           />
         </div>
+
+        {/* Settings modal (Change button) */}
+        {settingsModal && (
+          <SettingsModal
+            modal={settingsModal}
+            onUpdate={handleSettingsUpdate}
+            onOK={handleSettingsOK}
+            onCancel={handleSettingsCancel}
+            t={t}
+          />
+        )}
       </div>
     )
   }
 
-  return <HomePage onSelectGame={handleSelectGame} />
+  // ── Home view ──────────────────────────────────────────────────────────────
+  return (
+    <>
+      <HomePage onSelectGame={openSettingsFromHome} />
+      {settingsModal && (
+        <SettingsModal
+          modal={settingsModal}
+          onUpdate={handleSettingsUpdate}
+          onOK={handleSettingsOK}
+          onCancel={handleSettingsCancel}
+          t={t}
+        />
+      )}
+    </>
+  )
 }
