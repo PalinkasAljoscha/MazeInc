@@ -47,6 +47,30 @@
     "numberLabyrinth": {
       "title": "Labyrinthe de Nombres",
       "description": "Va d'un coin à l'autre — mais tu ne peux marcher que sur un nombre plus grand !"
+    },
+    "atTheRestaurant": {
+      "title": "Au Restaurant",
+      "description": "Regarde le menu, cherche les prix et calcule l'addition !"
+    }
+  },
+  "atRestaurant": {
+    "hud": {
+      "score": "Score : {{score}}"
+    },
+    "menu": {
+      "title": "📋 MENU"
+    },
+    "table": {
+      "title": "VOTRE TABLE"
+    },
+    "wheel": {
+      "label": "Quel est le total ? 🤔",
+      "ok": "✓ Confirmer"
+    },
+    "gameOver": {
+      "title": "Temps écoulé ! 🍽️",
+      "scoreLabel": "Ton score :",
+      "playAgain": "Rejouer"
     }
   },
   "ladder": {

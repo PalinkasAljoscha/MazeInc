@@ -7,6 +7,7 @@ import FeedTheNumbers, { meta as feedTheNumbersMeta } from './games/FeedTheNumbe
 import Balance, { meta as balanceMeta } from './games/Balance'
 import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
 import NumberLabyrinth, { meta as numberLabyrinthMeta } from './games/NumberLabyrinth'
+import AtTheRestaurant, { meta as atTheRestaurantMeta } from './games/AtTheRestaurant'
 
 const GAMES = [
   {
@@ -83,6 +84,18 @@ const GAMES = [
     shadow: 'shadow-orange-300',
     minLevel: numberLabyrinthMeta.minLevel,
     maxLevel: numberLabyrinthMeta.maxLevel,
+  },
+  {
+    id: 'at-the-restaurant',
+    enabled: true,
+    component: AtTheRestaurant,
+    titleKey: 'games.atTheRestaurant.title',
+    descKey: 'games.atTheRestaurant.description',
+    emoji: '🍽️',
+    color: 'from-orange-400 to-red-500',
+    shadow: 'shadow-red-300',
+    minLevel: atTheRestaurantMeta.minLevel,
+    maxLevel: atTheRestaurantMeta.maxLevel,
   },
 ].filter(g => g.enabled)
 

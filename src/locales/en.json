@@ -47,6 +47,30 @@
     "numberLabyrinth": {
       "title": "Number Labyrinth",
       "description": "Navigate from corner to corner — but you can only step onto a higher number!"
+    },
+    "atTheRestaurant": {
+      "title": "At the Restaurant",
+      "description": "Look at the menu, check the prices, and add up your bill!"
+    }
+  },
+  "atRestaurant": {
+    "hud": {
+      "score": "Score: {{score}}"
+    },
+    "menu": {
+      "title": "📋 MENU"
+    },
+    "table": {
+      "title": "YOUR TABLE"
+    },
+    "wheel": {
+      "label": "What is the total? 🤔",
+      "ok": "✓ Confirm"
+    },
+    "gameOver": {
+      "title": "Time's up! 🍽️",
+      "scoreLabel": "Your score:",
+      "playAgain": "Play Again"
     }
   },
   "ladder": {
