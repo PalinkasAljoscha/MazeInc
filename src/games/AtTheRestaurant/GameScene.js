@@ -21,6 +21,7 @@ const ALL_FOODS = [
   { id: 'cake',       emoji: '🍰', minPrice: 4, maxPrice: 6  },
   { id: 'pizza',      emoji: '🍕', minPrice: 3, maxPrice: 8  },
   { id: 'croissant',  emoji: '🥐', minPrice: 1, maxPrice: 3  },
+  { id: 'flatbread',  emoji: '🥙', minPrice: 4, maxPrice: 9  },
   { id: 'burger',     emoji: '🍔', minPrice: 4, maxPrice: 9  },
   { id: 'fondue',     emoji: '🫕', minPrice: 6, maxPrice: 10 },
   { id: 'nigiri',     emoji: '🍣', minPrice: 7, maxPrice: 12 },
@@ -51,14 +52,14 @@ export default class GameScene extends Phaser.Scene {
     this.level     = level
     this.maxPrice  = MAX_PRICE[level] ?? 5
 
-    this.score          = 0
-    this.isGameOver     = false
-    this.isTransitioning = false
+    this.score            = 0
+    this.isGameOver       = false
+    this.isTransitioning  = false
+    this.foodEmojiObjects = []
 
     // Wheel state
     this.wheelCenter = 1   // which number is in the centre slot
     this.selectedNum = null
-    this.wrongOnRound = 0
 
     // Background
     this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
@@ -169,7 +170,6 @@ export default class GameScene extends Phaser.Scene {
     // Wheel area background
     this.add.rectangle(W / 2, WHEEL_TOP + WHEEL_H / 2, W, WHEEL_H, 0x0d0d1a)
 
-
     // Arrow buttons
     this.leftBtn = this.add.text(22, numRowY, '‹', {
       fontSize: '46px', fontFamily: 'Arial Black, Arial', color: palette.white,
@@ -259,9 +259,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _renderWheel() {
-    const W   = this.W
     const mid = Math.floor(WHEEL_VISIBLE / 2)
-    const btnY = WHEEL_TOP + WHEEL_H - 34
 
     this.wheelSlots.forEach((slot, s) => {
       const off = s - mid
@@ -296,98 +294,77 @@ export default class GameScene extends Phaser.Scene {
   _submitAnswer() {
     if (this.isGameOver || this.isTransitioning) return
     if (this.selectedNum === null) return
-    if (this.selectedNum === this.correctTotal) {
-      this._handleCorrect()
-    } else {
-      this._handleWrong()
-    }
-  }
-
-  // ── answer handling ───────────────────────────────────────────────────────
-
-  _handleCorrect() {
     this.isTransitioning = true
-    this.score += 10
-    this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
-    this._celebrateEffect()
-    this.time.delayedCall(1200, () => this._nextRound())
+    this._showFeedback(this.selectedNum === this.correctTotal)
   }
 
-  _handleWrong() {
-    // Deduct 3 pts for each wrong answer if score > 3
-    if (this.score > 3) {
-      this.score -= 3
+  // ── answer feedback ───────────────────────────────────────────────────────
+
+  _showFeedback(isCorrect) {
+    const W  = this.W
+    const cx = W / 2
+    const cy = TABLE_TOP + TABLE_H / 2
+
+    if (isCorrect) {
+      this.score += 10
       this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
-    }
-    this.wrongOnRound++
-
-    if (this.wrongOnRound < 2) {
-      // First wrong: flash red, player gets one more try
-      this._flashWrong()
     } else {
-      // Second wrong: show answer, then next round
-      this.isTransitioning = true
-      this._showAnswerHint()
-      this.time.delayedCall(1400, () => this._nextRound())
+      if (this.score > 3) {
+        this.score -= 3
+        this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
+      }
     }
-  }
 
-  _flashWrong() {
-    // Mark the selected slot red for 600ms, then reset
-    this.isTransitioning = true
-    const mid = Math.floor(WHEEL_VISIBLE / 2)
-    this.wheelSlots.forEach((slot, s) => {
-      const off = s - mid
-      const num = ((this.wheelCenter - 1 + off + WHEEL_NUMS) % WHEEL_NUMS) + 1
-      if (num !== this.selectedNum) return
-      const { cx, cy, slotW, bg, txt } = slot
-      bg.clear()
-      bg.lineStyle(3, C.wrongRed, 1)
-      bg.strokeRoundedRect(cx - slotW / 2 + 3, cy - 28, slotW - 6, 56, 10)
-      bg.fillStyle(C.wrongRed, 0.3)
-      bg.fillRoundedRect(cx - slotW / 2 + 3, cy - 28, slotW - 6, 56, 10)
-      txt.setStyle({ fontSize: '34px', fontFamily: 'Arial Black, Arial', color: palette.wrongRed })
-    })
-    this.time.delayedCall(600, () => {
-      this.selectedNum = null
-      this.isTransitioning = false
-      this._renderWheel()
-    })
-  }
+    // Phase 1 — blue number (0 → 0.5 s)
+    const numText = this.add.text(cx, cy, String(this.selectedNum), {
+      fontSize: '96px', fontFamily: 'Arial Black, Arial', color: palette.btnBlue,
+    }).setOrigin(0.5, 0.5).setDepth(20).setPadding({ top: 20 })
 
-  _showAnswerHint() {
-    const W = this.W
-    const t = this.add.text(W / 2, TABLE_TOP + TABLE_H / 2,
-      `= ${this.correctTotal} 💡`, {
-      fontSize: '40px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
-    }).setOrigin(0.5, 0.5).setDepth(10)
-    this.tweens.add({
-      targets: t, alpha: 0, duration: 800, delay: 600,
-      onComplete: () => t.destroy(),
-    })
-  }
+    let crossText = null
 
-  _celebrateEffect() {
-    const W = this.W
-    const emojis = ['🎉', '⭐', '✨', '🎊', '🌟', '😄', '👍']
-    for (let i = 0; i < 7; i++) {
-      const x  = 50 + Math.random() * (W - 100)
-      const y  = TABLE_TOP + 10 + Math.random() * (TABLE_H - 20)
-      const em = this.add.text(x, y, emojis[i % emojis.length], {
-        fontSize: '28px',
-      }).setOrigin(0.5).setDepth(10)
-      this.tweens.add({
-        targets: em, y: y - 75, alpha: 0, duration: 950, delay: i * 80,
-        ease: 'Quad.easeOut',
-        onComplete: () => em.destroy(),
+    // Phase 2 — reveal correct / wrong at 0.5 s
+    this.time.delayedCall(500, () => {
+      if (isCorrect) {
+        numText.setColor(palette.correctGreen)
+        numText.setText(`${this.selectedNum} ✓`)
+      } else {
+        numText.setColor(palette.wrongRed)
+        // ✗ overlaid centred on the number, slightly larger to cross it out
+        crossText = this.add.text(cx, cy, '✗', {
+          fontSize: '110px', fontFamily: 'Arial Black, Arial', color: palette.wrongRed,
+        }).setOrigin(0.5, 0.5).setDepth(21).setPadding({ top: 20 })
+        this.cameras.main.shake(220, 0.008)
+      }
+    })
+
+    // Phase end — clean up at 1.5 s total
+    this.time.delayedCall(1500, () => {
+      numText.destroy()
+      if (crossText) crossText.destroy()
+
+      if (!isCorrect) {
+        this.selectedNum = null
+        this.isTransitioning = false
+        this._renderWheel()
+        return
+      }
+
+      // Show full price formula for 1.5 s, then switch table
+      const formula = this.currentOrder.map(f => f.price).join(' + ') + ' = ' + this.correctTotal
+      const formulaText = this.add.text(cx, cy, formula, {
+        fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
+      }).setOrigin(0.5, 0.5).setDepth(20)
+
+      this.time.delayedCall(1500, () => {
+        formulaText.destroy()
+        this._nextRound()
       })
-    }
+    })
   }
 
   // ── table rendering ───────────────────────────────────────────────────────
 
   _startRound() {
-    this.wrongOnRound = 0
     this.selectedNum  = null
     this.wheelCenter  = 1
     this.currentOrder = this._getOrder()
@@ -398,6 +375,7 @@ export default class GameScene extends Phaser.Scene {
 
   _renderTable(container) {
     container.removeAll(true)
+    this.foodEmojiObjects = []
 
     const W     = this.W
     const items = this.currentOrder
@@ -408,23 +386,21 @@ export default class GameScene extends Phaser.Scene {
     img.setDisplaySize(W, TABLE_H)
     container.add(img)
 
-    // Food emojis spread across the tablecloth surface
-    // Horizontal: full usable width with small margins
-    // Vertical: ~58% down the image (below salt/pepper/flowers, on the open cloth)
-    const areaX    = 36
-    const areaW    = W - 72
-    const bottomY  = TABLE_TOP + Math.round(TABLE_H * 0.58)
+    const areaX      = 36
+    const areaW      = W - 72
+    const bottomY    = TABLE_TOP + Math.round(TABLE_H * 0.58)
     const rowSpacing = 66
-
-    const bottomRow = count > 4 ? items.slice(count - 4) : items
-    const topRow    = count > 4 ? items.slice(0, count - 4) : []
+    const bottomRow  = count > 4 ? items.slice(count - 4) : items
+    const topRow     = count > 4 ? items.slice(0, count - 4) : []
 
     const placeRow = (row, cy) => {
       const itemW = areaW / row.length
       row.forEach((item, i) => {
         const cx = areaX + itemW * i + itemW / 2
-        const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' }).setOrigin(0.5, 0.5).setPadding({ top: 16 })
+        const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' })
+          .setOrigin(0.5, 0.5).setPadding({ top: 16 })
         container.add(em)
+        this.foodEmojiObjects.push(em)
       })
     }
 
@@ -434,32 +410,55 @@ export default class GameScene extends Phaser.Scene {
 
   _nextRound() {
     if (this.isGameOver) return
-    const W = this.W
 
-    this.tweens.add({
-      targets: this.tableContainer,
-      x: -W,
-      duration: 280,
-      ease: 'Power2',
-      onComplete: () => {
-        if (this.isGameOver) return
-        this.wrongOnRound  = 0
-        this.selectedNum   = null
-        this.wheelCenter   = 1
-        this.currentOrder  = this._getOrder()
-        this.correctTotal  = this.currentOrder.reduce((s, f) => s + f.price, 0)
-        this._renderTable(this.tableContainer)
-        this._renderWheel()
+    // Detach current food emojis from container so _renderTable won't destroy them mid-flight
+    const outgoing = [...this.foodEmojiObjects]
+    outgoing.forEach(em => this.tableContainer.remove(em, false))
+    this.foodEmojiObjects = []
 
-        this.tableContainer.x = W
+    // Slide each outgoing emoji off in a random direction
+    outgoing.forEach((em, i) => {
+      const angle = Math.random() * Math.PI * 2
+      const dist  = 300
+      this.time.delayedCall(i * 300, () => {
+        if (!em.active) return
         this.tweens.add({
-          targets: this.tableContainer,
-          x: 0,
-          duration: 280,
+          targets: em,
+          x: em.x + Math.cos(angle) * dist,
+          y: em.y + Math.sin(angle) * dist,
+          alpha: 0,
+          duration: 250,
           ease: 'Power2',
-          onComplete: () => { this.isTransitioning = false },
+          onComplete: () => em.destroy(),
         })
-      },
+      })
+    })
+
+    // After all outgoing have departed, load new order and reveal food one by one
+    const afterOut = outgoing.length * 300 + 260
+    this.time.delayedCall(afterOut, () => {
+      if (this.isGameOver) return
+
+      this.selectedNum  = null
+      this.wheelCenter  = 1
+      this.currentOrder = this._getOrder()
+      this.correctTotal = this.currentOrder.reduce((s, f) => s + f.price, 0)
+
+      this._renderTable(this.tableContainer)
+      this.foodEmojiObjects.forEach(em => em.setAlpha(0))
+      this._renderWheel()
+
+      // Appear one by one
+      const incoming = [...this.foodEmojiObjects]
+      incoming.forEach((em, i) => {
+        this.time.delayedCall(i * 300, () => {
+          if (em.active) em.setAlpha(1)
+        })
+      })
+
+      this.time.delayedCall(incoming.length * 300, () => {
+        this.isTransitioning = false
+      })
     })
   }
 

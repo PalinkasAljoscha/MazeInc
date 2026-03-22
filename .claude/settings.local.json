@@ -10,7 +10,8 @@
       "Bash(npm run:*)",
       "Bash(python:*)",
       "Bash(grep -r \"home\\\\.title\\\\|home\\\\.title\\\\|''''home\\\\.title''''\\\\|home\\\\.title\" /c/Users/Alj/CODING_2/math_trainer/src --include=*.jsx --include=*.js)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(ls:*)"
     ]
   }
 }

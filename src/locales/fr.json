@@ -60,13 +60,6 @@
     "menu": {
       "title": "📋 MENU"
     },
-    "table": {
-      "title": "VOTRE TABLE"
-    },
-    "wheel": {
-      "label": "Quel est le total ? 🤔",
-      "ok": "✓ Confirmer"
-    },
     "gameOver": {
       "title": "Temps écoulé ! 🍽️",
       "scoreLabel": "Ton score :",
