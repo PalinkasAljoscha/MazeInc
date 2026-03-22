@@ -11,17 +11,20 @@ const WHEEL_NUMS    = 30    // numbers on the wheel: 1–30
 const WHEEL_VISIBLE = 7     // how many slots are shown at once
 
 const ALL_FOODS = [
-  { id: 'burger',     emoji: '🍔' },
-  { id: 'fries',      emoji: '🍟' },
-  { id: 'pizza',      emoji: '🍕' },
-  { id: 'maki',       emoji: '🍙' },
-  { id: 'nigiri',     emoji: '🍣' },
-  { id: 'dimsum',     emoji: '🥟' },
-  { id: 'fruitsalad', emoji: '🍓' },
-  { id: 'coffee',     emoji: '☕' },
-  { id: 'cake',       emoji: '🎂' },
-  { id: 'icecream',   emoji: '🍦' },
-  { id: 'lemonade',   emoji: '🍹' },
+  { id: 'fries',      emoji: '🍟', minPrice: 1, maxPrice: 3  },
+  { id: 'coffee',     emoji: '☕', minPrice: 1, maxPrice: 3  },
+  { id: 'lemonade',   emoji: '🍹', minPrice: 2, maxPrice: 4  },
+  { id: 'icecream',   emoji: '🍦', minPrice: 2, maxPrice: 4  },
+  { id: 'fruitsalad', emoji: '🍓', minPrice: 1, maxPrice: 3  },
+  { id: 'dimsum',     emoji: '🥟', minPrice: 2, maxPrice: 5  },
+  { id: 'taco',       emoji: '🌮', minPrice: 2, maxPrice: 5  },
+  { id: 'cake',       emoji: '🍰', minPrice: 4, maxPrice: 6  },
+  { id: 'pizza',      emoji: '🍕', minPrice: 3, maxPrice: 8  },
+  { id: 'croissant',  emoji: '🥐', minPrice: 1, maxPrice: 3  },
+  { id: 'flatbread',  emoji: '🥙', minPrice: 4, maxPrice: 9  },
+  { id: 'burger',     emoji: '🍔', minPrice: 4, maxPrice: 9  },
+  { id: 'fondue',     emoji: '🫕', minPrice: 6, maxPrice: 10 },
+  { id: 'nigiri',     emoji: '🍣', minPrice: 7, maxPrice: 12 },
 ]
 
 // ── layout zones (y px, top of each zone) ────────────────────────────────────
@@ -83,10 +86,11 @@ export default class GameScene extends Phaser.Scene {
   // ── menu building ─────────────────────────────────────────────────────────
 
   _buildMenu() {
-    const shuffled = [...ALL_FOODS].sort(() => Math.random() - 0.5)
+    const eligible = ALL_FOODS.filter(f => f.minPrice <= this.maxPrice)
+    const shuffled = [...eligible].sort(() => Math.random() - 0.5)
     return shuffled.slice(0, 6).map(food => ({
       ...food,
-      price: Phaser.Math.Between(1, this.maxPrice),
+      price: Phaser.Math.Between(food.minPrice, Math.min(food.maxPrice, this.maxPrice)),
     }))
   }
 
@@ -144,7 +148,7 @@ export default class GameScene extends Phaser.Scene {
       const tileLeft = cx - colW / 2 + 14
       this.add.text(tileLeft, cy, item.emoji, {
         fontSize: '28px',
-      }).setOrigin(0, 0.5)
+      }).setOrigin(0, 0.5).setPadding({ top: 10 })
 
       this.add.text(cx, cy, String(item.price), {
         fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
@@ -420,7 +424,7 @@ export default class GameScene extends Phaser.Scene {
       const itemW = areaW / row.length
       row.forEach((item, i) => {
         const cx = areaX + itemW * i + itemW / 2
-        const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' }).setOrigin(0.5, 0.5)
+        const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' }).setOrigin(0.5, 0.5).setPadding({ top: 16 })
         container.add(em)
       })
     }
