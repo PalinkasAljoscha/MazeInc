@@ -42,10 +42,19 @@ src/
     shared/
       pathViz.jsx                  # Shared <PathLayer> SVG component for sequence/path games (NewWays, LadderToInfinity)
     MultiplesCatcher/
+      assets/                      # React-only assets (SVG icons, UI illustrations) — imported as ES modules
       index.jsx                    # React wrapper + on-screen touch buttons
       GameScene.js                 # Phaser scene — all game logic
 public/
   favicon.svg                      # App favicon (SVG, also used as apple-touch-icon)
+  games/
+    multiples-catcher/             # Phaser-loaded assets for this game (images, spritesheets, audio)
+    at-the-restaurant/
+    balance/
+    feed-the-numbers/
+    ladder/
+    new-ways/
+    number-labyrinth/
 ```
 
 ---
@@ -56,6 +65,10 @@ public/
 - **Strings** — Never hardcode visible text. Use `t()` everywhere. Add keys to all locale files for every new string.
 - **i18n key convention** — Card strings: `games.<gameId>.title` / `.description`. In-game strings: `<gameId>.*` (e.g. `multiplesCatcher.hud.score`).
 - **Asset paths** — Always use relative paths for all assets (images, audio, sprites). Never use absolute paths or hardcoded domain names.
+- **Asset placement** — Two locations, chosen by who loads the asset:
+  - `public/games/<gameId>/` — anything loaded by Phaser's loader (`this.load.image`, `this.load.spritesheet`, `this.load.atlas`, audio, etc.). The `<gameId>` must match `meta.id` exactly (kebab-case, e.g. `multiples-catcher`). Reference in `GameScene.js` as a relative path: `'games/multiples-catcher/hero.png'`.
+  - `src/games/<GameName>/assets/` — images used only inside the React wrapper (decorative SVGs, UI illustrations). Import as ES modules: `import icon from './assets/icon.svg'`. Never load these via Phaser's loader.
+  - When adding a new game, create both folders (even if empty) and add a `.gitkeep` so the structure is tracked in git.
 - **Shared components** — Never re-implement `TouchButton` inside a game wrapper. Always import from `src/components/TouchButton.jsx`. For sequence/path games that draw a move history in SVG, use `<PathLayer>` from `src/games/shared/pathViz.jsx` rather than duplicating the rendering logic.
 - **Analysis folder** — `analysis/` contains outside-of-app experimentation only. Never import from it; read as reference only.
 
@@ -114,6 +127,7 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx`
 4. Import component and meta into `App.jsx`; add a single entry to `GAMES` with `component`, `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, and `hasSpeed` if applicable
 5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json` and `fr.json`
+6. Create asset folders: `src/games/MyGame/assets/` (React-side) and `public/games/<meta.id>/` (Phaser-side), each with a `.gitkeep` if empty
 
 ---
 
