@@ -1,0 +1,156 @@
+{
+  "app": {
+    "name": "Maze Inc."
+  },
+  "levels": {
+    "label": "Stufe",
+    "1": "Hasenmatt",
+    "2": "Rigi",
+    "3": "Eiger",
+    "4": "Matterhorn",
+    "5": "Mont Blanc"
+  },
+  "home": {
+    "subtitle": "Wähle ein Spiel und leg los!",
+    "play": "Spielen →",
+    "comingSoon": "Weitere Spiele kommen bald!",
+    "backButton": "← Start",
+    "startNew": "Neu starten",
+    "speed": "schnell",
+    "speedLabel": "Tempo",
+    "change": "Ändern",
+    "chooseDifficulty": "Schwierigkeit wählen",
+    "ok": "OK",
+    "cancel": "Abbrechen"
+  },
+  "games": {
+    "multiplesCatcher": {
+      "title": "Vielfachen-Fänger",
+      "description": "Fange die fallenden Bälle im richtigen Fach! Ist die Zahl ein Vielfaches der Fachnummer?"
+    },
+    "newWays": {
+      "title": "Neue Wege",
+      "description": "Navigiere von Ecke zu Ecke — aber wiederhole niemals eine Zugfolge!"
+    },
+    "feedTheNumbers": {
+      "title": "Füttere die Zahlen",
+      "description": "Schieße Bälle auf die hungrigen Zahlen! Sammle Bonuspunkte, wenn gleiche Ziffern erscheinen."
+    },
+    "balance": {
+      "title": "Gleichgewicht",
+      "description": "Stapele nummerierte Würfel. Halte links = rechts im Gleichgewicht, oder baue eine aufsteigende Folge!"
+    },
+    "ladder": {
+      "title": "Leiter ins Unendliche",
+      "description": "Klettere so hoch wie möglich — aber wiederhole niemals eine Zugfolge!"
+    },
+    "numberLabyrinth": {
+      "title": "Zahlen-Labyrinth",
+      "description": "Navigiere von Ecke zu Ecke — du darfst aber nur auf eine höhere Zahl treten!"
+    },
+    "atTheRestaurant": {
+      "title": "Im Restaurant",
+      "description": "Schau dir die Speisekarte an, prüfe die Preise und rechne deine Rechnung aus!"
+    }
+  },
+  "atRestaurant": {
+    "hud": {
+      "score": "Punkte: {{score}}"
+    },
+    "menu": {
+      "title": "📋 SPEISEKARTE"
+    },
+    "gameOver": {
+      "title": "Zeit abgelaufen! 🍽️",
+      "scoreLabel": "Deine Punkte:",
+      "playAgain": "Nochmal spielen"
+    }
+  },
+  "ladder": {
+    "hud": {
+      "height": "Höhe",
+      "moves": "Züge",
+      "undos": "Rückgängig"
+    },
+    "gameOver": {
+      "title": "Blockiert! 🧱",
+      "heightLabel": "Erreichte Höhe",
+      "movesLabel": "Züge",
+      "playAgain": "Nochmal spielen"
+    }
+  },
+  "newWays": {
+    "won": "Geschafft! 🎉",
+    "movesLabel": "Züge",
+    "timeLabel": "Zeit",
+    "playAgain": "Nochmal spielen"
+  },
+  "balance": {
+    "hud": {
+      "score": "Punkte: {{score}}",
+      "title": "Gleichgewicht",
+      "left": "LINKS",
+      "right": "RECHTS",
+      "leftSum": "Σ links",
+      "rightSum": "Σ rechts",
+      "total": "Gesamt:",
+      "hint": "gleiche Summen oder aufsteigende Spaltensummen!"
+    },
+    "controls": {
+      "drop": "↓ Fallen lassen"
+    },
+    "feedback": {
+      "balanced": "⚖️ Ausgeglichen!",
+      "ascending": "📈 Aufsteigend!"
+    },
+    "gameOver": {
+      "title": "Zeit abgelaufen! 🎉",
+      "scoreLabel": "Deine Punkte:",
+      "playAgain": "Nochmal spielen"
+    }
+  },
+  "feedTheNumbers": {
+    "hud": {
+      "score": "Punkte: {{score}}",
+      "hint": "— schieße einen Ball zu einer hungrigen Zahl —"
+    },
+    "controls": {
+      "send": "↑ Senden"
+    },
+    "feedback": {
+      "doubleDigit": "+2 Zwillingsziffern!",
+      "tripleDigit": "+6 Drillinge! ✨"
+    },
+    "gameOver": {
+      "title": "Zeit abgelaufen! 🎉",
+      "scoreLabel": "Deine Punkte:",
+      "playAgain": "Nochmal spielen"
+    }
+  },
+  "numberLabyrinth": {
+    "done": "Fertig ✓",
+    "retry": "Nochmal versuchen",
+    "invalid": "{{count}} ungültiger Zug/ungültige Züge — versuch's nochmal!",
+    "wonTitle": "Gelöst! 🎉",
+    "movesLabel": "Züge",
+    "playAgain": "Nochmal spielen"
+  },
+  "multiplesCatcher": {
+    "hud": {
+      "score": "Punkte: {{score}}",
+      "hint": "— wirf den Ball ins richtige Fach —"
+    },
+    "controls": {
+      "drop": "↓ Fallen lassen"
+    },
+    "feedback": {
+      "correct": "{{ballVal}} = {{slotVal}} · {{result}} ✓",
+      "wrong": "{{ballVal}} ÷ {{slotVal}}  ✗"
+    },
+    "gameOver": {
+      "title": "Zeit abgelaufen! 🎉",
+      "scoreLabel": "Deine Punkte:",
+      "playAgain": "Nochmal spielen"
+    }
+  }
+}

@@ -221,15 +221,20 @@ function HomePage({ onSelectGame }) {
     <div className="relative w-screen h-screen flex flex-col items-center bg-gradient-to-b from-sky-400 to-blue-600 overflow-auto py-8 px-4">
       {/* Language switcher */}
       <div className="absolute top-4 right-4 flex gap-2">
-        {['en', 'fr'].map((lang) => (
+        {/* To add a language: 1) create src/locales/<code>.json, 2) register in i18n.js, 3) add entry here */}
+        {[
+          { code: 'en', label: 'English' },
+          { code: 'fr', label: 'Français' },
+          { code: 'de', label: 'Deutsch' },
+        ].map(({ code, label }) => (
           <button
-            key={lang}
-            onClick={() => i18n.changeLanguage(lang)}
-            className="text-2xl leading-none transition-opacity"
-            style={{ opacity: i18n.language === lang ? 1 : 0.4 }}
-            aria-label={lang === 'en' ? 'English' : 'Français'}
+            key={code}
+            onClick={() => i18n.changeLanguage(code)}
+            className="text-sm font-black leading-none transition-opacity px-1"
+            style={{ opacity: i18n.language === code ? 1 : 0.4 }}
+            aria-label={label}
           >
-            {lang === 'en' ? '🇬🇧' : '🇫🇷'}
+            {code.toUpperCase()}
           </button>
         ))}
       </div>
