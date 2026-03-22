@@ -21,7 +21,6 @@ const ALL_FOODS = [
   { id: 'cake',       emoji: '🍰', minPrice: 4, maxPrice: 6  },
   { id: 'pizza',      emoji: '🍕', minPrice: 3, maxPrice: 8  },
   { id: 'croissant',  emoji: '🥐', minPrice: 1, maxPrice: 3  },
-  { id: 'flatbread',  emoji: '🥙', minPrice: 4, maxPrice: 9  },
   { id: 'burger',     emoji: '🍔', minPrice: 4, maxPrice: 9  },
   { id: 'fondue',     emoji: '🫕', minPrice: 6, maxPrice: 10 },
   { id: 'nigiri',     emoji: '🍣', minPrice: 7, maxPrice: 12 },
