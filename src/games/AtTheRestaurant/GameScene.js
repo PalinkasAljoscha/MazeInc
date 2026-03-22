@@ -26,18 +26,20 @@ const ALL_FOODS = [
 
 // ── layout zones (y px, top of each zone) ────────────────────────────────────
 const HUD_H     = 55
-const MENU_TOP  = HUD_H
+const MENU_TOP  = HUD_H                      // 55
 const MENU_H    = 200
-const SEP1_Y    = MENU_TOP + MENU_H          // 255
-const TABLE_TOP = SEP1_Y + 6                 // 261
-const TABLE_H   = 185
-const SEP2_Y    = TABLE_TOP + TABLE_H        // 446
-const WHEEL_TOP = SEP2_Y + 6                 // 452
-const WHEEL_H   = GAME_H - WHEEL_TOP         // 228
+const TABLE_TOP = MENU_TOP + MENU_H          // 255
+const TABLE_H   = Math.round(GAME_W * 908 / 1290) // 338 — image aspect 1290×908
+const WHEEL_TOP = TABLE_TOP + TABLE_H        // 593
+const WHEEL_H   = GAME_H - WHEEL_TOP         // 87
 
 // ── scene ─────────────────────────────────────────────────────────────────────
 export default class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }) }
+
+  preload() {
+    this.load.image('restaurant-table', 'games/at-the-restaurant/restaurant_table.png')
+  }
 
   create() {
     const W = GAME_W, H = GAME_H
@@ -119,9 +121,9 @@ export default class GameScene extends Phaser.Scene {
 
   _drawMenu() {
     const W = this.W
-    const COLS = 2, ROWS = 3
+    const COLS = 3, ROWS = 2
     const colW = W / COLS
-    const rowH = (MENU_H - 28) / ROWS   // ~57 px per row
+    const rowH = (MENU_H - 28) / ROWS   // ~86 px per row
 
     this.add.text(W / 2, MENU_TOP + 6, i18n.t('atRestaurant.menu.title'), {
       fontSize: '14px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
@@ -138,38 +140,32 @@ export default class GameScene extends Phaser.Scene {
       g.fillStyle(C.gameHeader, 1)
       g.fillRoundedRect(cx - colW / 2 + 6, cy - rowH / 2 + 2, colW - 12, rowH - 4, 8)
 
-      // Emoji
-      this.add.text(cx - colW / 2 + 30, cy, item.emoji, {
+      // Emoji + price left-aligned side by side
+      const tileLeft = cx - colW / 2 + 14
+      this.add.text(tileLeft, cy, item.emoji, {
         fontSize: '28px',
-      }).setOrigin(0.5, 0.5)
+      }).setOrigin(0, 0.5)
 
-      // Price — right-aligned
-      this.add.text(cx + colW / 2 - 14, cy, String(item.price), {
+      this.add.text(cx, cy, String(item.price), {
         fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
-      }).setOrigin(1, 0.5)
+      }).setOrigin(0.5, 0.5)
     })
   }
 
   _drawDividers() {
-    const W = this.W
-    this.add.rectangle(W / 2, SEP1_Y + 3, W, 2, C.divider)
-    this.add.rectangle(W / 2, SEP2_Y + 3, W, 2, C.divider)
+    this.add.rectangle(this.W / 2, TABLE_TOP, this.W, 1, C.divider)
   }
 
   // ── wheel ─────────────────────────────────────────────────────────────────
 
   _drawWheel() {
     const W = this.W
-    const numRowY  = WHEEL_TOP + 65    // vertical centre of number slots
+    const numRowY  = WHEEL_TOP + Math.round(WHEEL_H / 2)  // vertical centre of number slots
     const SLOT_W   = (W - 80) / WHEEL_VISIBLE
 
     // Wheel area background
     this.add.rectangle(W / 2, WHEEL_TOP + WHEEL_H / 2, W, WHEEL_H, 0x0d0d1a)
 
-    // Label
-    this.add.text(W / 2, WHEEL_TOP + 8, i18n.t('atRestaurant.wheel.label'), {
-      fontSize: '14px', fontFamily: 'Arial Black, Arial', color: palette.silverGray,
-    }).setOrigin(0.5, 0)
 
     // Arrow buttons
     this.leftBtn = this.add.text(22, numRowY, '‹', {
@@ -190,19 +186,44 @@ export default class GameScene extends Phaser.Scene {
       const txt = this.add.text(cx, numRowY, '', {
         fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.white,
       }).setOrigin(0.5, 0.5).setInteractive({ useHandCursor: true })
-      txt.on('pointerdown', (_p, _lx, _ly, ev) => { ev.stopPropagation(); this._onSlotClick(s) })
+      txt.on('pointerup', (_p, _lx, _ly, ev) => {
+        if (!this._dragMoved) { ev.stopPropagation(); this._onSlotClick(s) }
+      })
       return { cx, cy: numRowY, slotW: SLOT_W, bg, txt }
     })
 
-    // Confirm button
-    const btnY = WHEEL_TOP + WHEEL_H - 34
-    this.confirmBg  = this.add.graphics()
-    this.confirmTxt = this.add.text(W / 2, btnY, i18n.t('atRestaurant.wheel.ok'), {
-      fontSize: '22px', fontFamily: 'Arial Black, Arial', color: palette.white,
-    }).setOrigin(0.5, 0.5).setInteractive({ useHandCursor: true })
-    this.confirmTxt.on('pointerdown', () => this._submitAnswer())
-
+    this._setupWheelDrag()
     this._renderWheel()
+  }
+
+  _setupWheelDrag() {
+    const SLOT_W = (this.W - 80) / WHEEL_VISIBLE
+    this._dragLastX = null
+    this._dragAccum = 0
+    this._dragMoved = false
+
+    this.input.on('pointerdown', (ptr) => {
+      if (ptr.y < WHEEL_TOP || ptr.y > WHEEL_TOP + WHEEL_H) return
+      this._dragLastX = ptr.x
+      this._dragAccum = 0
+      this._dragMoved = false
+    })
+
+    this.input.on('pointermove', (ptr) => {
+      if (this._dragLastX === null || !ptr.isDown) return
+      if (this.isGameOver || this.isTransitioning) return
+      const dx = ptr.x - this._dragLastX
+      this._dragAccum -= dx   // swipe right → negative accum → spin(-1)
+      while (this._dragAccum >=  SLOT_W) { this._spinWheel(+1); this._dragAccum -= SLOT_W; this._dragMoved = true }
+      while (this._dragAccum <= -SLOT_W) { this._spinWheel(-1); this._dragAccum += SLOT_W; this._dragMoved = true }
+      this._dragLastX = ptr.x
+    })
+
+    this.input.on('pointerup', () => {
+      this._dragLastX = null
+      this._dragAccum = 0
+      this._dragMoved = false
+    })
   }
 
   _spinWheel(dir) {
@@ -267,17 +288,6 @@ export default class GameScene extends Phaser.Scene {
       txt.setText(String(num))
     })
 
-    // Confirm button
-    this.confirmBg.clear()
-    if (this.selectedNum !== null) {
-      this.confirmBg.fillStyle(C.btnBlue, 1)
-      this.confirmBg.fillRoundedRect(W / 2 - 95, btnY - 23, 190, 46, 12)
-      this.confirmTxt.setAlpha(1)
-    } else {
-      this.confirmBg.fillStyle(C.gameHeader, 1)
-      this.confirmBg.fillRoundedRect(W / 2 - 95, btnY - 23, 190, 46, 12)
-      this.confirmTxt.setAlpha(0.25)
-    }
   }
 
   _submitAnswer() {
@@ -390,31 +400,33 @@ export default class GameScene extends Phaser.Scene {
     const items = this.currentOrder
     const count = items.length
 
-    // Table cloth
-    const g = this.add.graphics()
-    g.fillStyle(0x3b1d00, 1)
-    g.fillRoundedRect(16, TABLE_TOP + 8, W - 32, TABLE_H - 16, 14)
-    container.add(g)
+    // Table image — fills full width, aspect ratio preserved
+    const img = this.add.image(W / 2, TABLE_TOP + TABLE_H / 2, 'restaurant-table')
+    img.setDisplaySize(W, TABLE_H)
+    container.add(img)
 
-    // Label
-    const hdr = this.add.text(W / 2, TABLE_TOP + 18, i18n.t('atRestaurant.table.title'), {
-      fontSize: '12px', fontFamily: 'Arial, sans-serif', color: '#a0916a',
-    }).setOrigin(0.5, 0)
-    container.add(hdr)
+    // Food emojis spread across the tablecloth surface
+    // Horizontal: full usable width with small margins
+    // Vertical: ~58% down the image (below salt/pepper/flowers, on the open cloth)
+    const areaX    = 36
+    const areaW    = W - 72
+    const bottomY  = TABLE_TOP + Math.round(TABLE_H * 0.58)
+    const rowSpacing = 66
 
-    // Food emojis, evenly spaced
-    const areaX = 32
-    const areaW = W - 64
-    const itemW = areaW / count
-    const cy    = TABLE_TOP + 45 + (TABLE_H - 53) / 2
+    const bottomRow = count > 4 ? items.slice(count - 4) : items
+    const topRow    = count > 4 ? items.slice(0, count - 4) : []
 
-    items.forEach((item, i) => {
-      const cx = areaX + itemW * i + itemW / 2
-      const em = this.add.text(cx, cy, item.emoji, {
-        fontSize: '44px',
-      }).setOrigin(0.5, 0.5)
-      container.add(em)
-    })
+    const placeRow = (row, cy) => {
+      const itemW = areaW / row.length
+      row.forEach((item, i) => {
+        const cx = areaX + itemW * i + itemW / 2
+        const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' }).setOrigin(0.5, 0.5)
+        container.add(em)
+      })
+    }
+
+    placeRow(bottomRow, bottomY)
+    if (topRow.length) placeRow(topRow, bottomY - rowSpacing)
   }
 
   _nextRound() {
