@@ -61,6 +61,11 @@ export const palette = {
   pipeBlue:       '#4a90d9',   // pipe tube color
   btnAmber:       '#f59e0b',   // amber — Send button fill
   btnAmberHover:  '#d97706',   // amber darker — Send button hover
+
+  // ── Coins (At the Restaurant) ──
+  coinSilver:     '#b0bfd0',   // silver coin fill
+  coinBorder:     '#7890a8',   // coin border ring
+  coinText:       '#1c2538',   // number printed on coin
 }
 
 // Phaser uses 0xRRGGBB integers — derived from the palette strings above.
@@ -90,4 +95,6 @@ export const phaser = {
   pipeBlue:      toHex(palette.pipeBlue),
   btnAmber:      toHex(palette.btnAmber),
   btnAmberHover: toHex(palette.btnAmberHover),
+  coinSilver:    toHex(palette.coinSilver),
+  coinBorder:    toHex(palette.coinBorder),
 }

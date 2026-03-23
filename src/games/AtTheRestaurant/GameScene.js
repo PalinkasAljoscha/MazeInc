@@ -5,10 +5,9 @@ import { GAME_W, GAME_H } from '../shared/phaserConstants.js'
 import { buildGameOverPanel, createCountdownTimer } from '../shared/phaserUI.js'
 
 // ── constants ─────────────────────────────────────────────────────────────────
-const GAME_DURATION = 120
-const MAX_PRICE     = { 1: 5, 2: 6, 3: 7, 4: 9, 5: 12 }
-const WHEEL_NUMS    = 30    // numbers on the wheel: 1–30
-const WHEEL_VISIBLE = 7     // how many slots are shown at once
+const GAME_DURATION   = 120
+const MAX_PRICE       = { 1: 5, 2: 6, 3: 7, 4: 9, 5: 12 }
+const MAX_TABLE_TOTAL = { 1: 10, 2: 13, 3: 16, 4: 19, 5: 22 }
 
 const ALL_FOODS = [
   { id: 'fries',      emoji: '🍟', minPrice: 1, maxPrice: 3  },
@@ -27,14 +26,49 @@ const ALL_FOODS = [
   { id: 'nigiri',     emoji: '🍣', minPrice: 5, maxPrice: 7  },
 ]
 
-// ── layout zones (y px, top of each zone) ────────────────────────────────────
-const HUD_H     = 55
-const MENU_TOP  = HUD_H                      // 55
-const MENU_H    = 200
-const TABLE_TOP = MENU_TOP + MENU_H          // 255
-const TABLE_H   = Math.round(GAME_W * 908 / 1290) // 338 — image aspect 1290×908
-const WHEEL_TOP = TABLE_TOP + TABLE_H        // 593
-const WHEEL_H   = GAME_H - WHEEL_TOP         // 87
+// ── layout zones ──────────────────────────────────────────────────────────────
+const HUD_H    = 55
+const MENU_TOP = HUD_H           // 55
+const MENU_H   = 200
+const TABLE_TOP = MENU_TOP + MENU_H  // 255
+
+// ── coin U-shape layout ───────────────────────────────────────────────────────
+// 22 coins: 7 down the left, 8 across the bottom, 7 up the right
+const N_SIDE       = 7          // coins per side column
+const N_BOTTOM     = 8          // coins in bottom row
+const COIN_R       = 18         // visual radius (px)
+const COIN_LEFT_X  = 24         // x-centre of left column
+const COIN_RIGHT_X = GAME_W - 24  // 456 — x-centre of right column
+const COIN_TOP_Y   = TABLE_TOP + COIN_R + 6    // 279 — topmost coin y-centre
+const COIN_COL_BOT = GAME_H - 100              // 580 — bottommost side coin y-centre
+const COIN_BOT_Y   = GAME_H - 30              // 650 — bottom-row coin y-centre
+
+// ── table image dimensions (fills the interior of the U) ─────────────────────
+const TABLE_IMG_W  = COIN_RIGHT_X - COIN_LEFT_X - COIN_R * 2 - 8  // ≈384
+const TABLE_IMG_H  = COIN_BOT_Y   - COIN_R - TABLE_TOP - 8        // ≈369
+const TABLE_IMG_CX = GAME_W / 2
+const TABLE_IMG_CY = TABLE_TOP + Math.round(TABLE_IMG_H / 2)       // ≈440
+
+// ── coin position generator ───────────────────────────────────────────────────
+function buildCoinPositions() {
+  const pts = []
+  // Left column: coins 1–7, top → bottom
+  for (let i = 0; i < N_SIDE; i++) {
+    const t = i / (N_SIDE - 1)
+    pts.push({ x: COIN_LEFT_X, y: Math.round(COIN_TOP_Y + t * (COIN_COL_BOT - COIN_TOP_Y)) })
+  }
+  // Bottom row: coins 8–15, left → right
+  for (let i = 0; i < N_BOTTOM; i++) {
+    const t = i / (N_BOTTOM - 1)
+    pts.push({ x: Math.round(COIN_LEFT_X + t * (COIN_RIGHT_X - COIN_LEFT_X)), y: COIN_BOT_Y })
+  }
+  // Right column: coins 16–22, bottom → top
+  for (let i = N_SIDE - 1; i >= 0; i--) {
+    const t = i / (N_SIDE - 1)
+    pts.push({ x: COIN_RIGHT_X, y: Math.round(COIN_TOP_Y + t * (COIN_COL_BOT - COIN_TOP_Y)) })
+  }
+  return pts  // 7 + 8 + 7 = 22
+}
 
 // ── scene ─────────────────────────────────────────────────────────────────────
 export default class GameScene extends Phaser.Scene {
@@ -48,18 +82,17 @@ export default class GameScene extends Phaser.Scene {
     const W = GAME_W, H = GAME_H
     this.W = W; this.H = H
 
-    const level    = this.registry.get('level') ?? 1
-    this.level     = level
-    this.maxPrice  = MAX_PRICE[level] ?? 5
+    const level        = this.registry.get('level') ?? 1
+    this.level         = level
+    this.maxPrice      = MAX_PRICE[level] ?? 5
+    this.maxTableTotal = MAX_TABLE_TOTAL[level] ?? 10
 
     this.score            = 0
     this.isGameOver       = false
     this.isTransitioning  = false
     this.foodEmojiObjects = []
-
-    // Wheel state
-    this.wheelCenter = 1   // which number is in the centre slot
-    this.selectedNum = null
+    this.selectedNum      = null
+    this.coinObjects      = []
 
     // Background
     this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
@@ -71,10 +104,12 @@ export default class GameScene extends Phaser.Scene {
     this._drawHUD()
     this._drawMenu()
     this._drawDividers()
-    this._drawWheel()
 
     // Container for animated table (position is tweened each round)
     this.tableContainer = this.add.container(0, 0)
+
+    // 22 silver coins in a U-shape
+    this._drawCoins()
 
     this._startRound()
 
@@ -95,13 +130,13 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _getOrder() {
-    const maxTotal = 5 + 5 * this.level
+    const maxTotal = this.maxTableTotal
     for (let attempt = 0; attempt < 300; attempt++) {
       const count   = Phaser.Math.Between(2, 5)
       const shuffled = [...this.menuItems].sort(() => Math.random() - 0.5)
       const items   = shuffled.slice(0, count)
       const total   = items.reduce((s, f) => s + f.price, 0)
-      if (total >= 2 && total <= Math.min(maxTotal, WHEEL_NUMS)) return items
+      if (total >= 2 && total <= Math.min(maxTotal, N_SIDE * 2 + N_BOTTOM)) return items
     }
     // Fallback: two cheapest
     return [...this.menuItems].sort((a, b) => a.price - b.price).slice(0, 2)
@@ -160,136 +195,64 @@ export default class GameScene extends Phaser.Scene {
     this.add.rectangle(this.W / 2, TABLE_TOP, this.W, 1, C.divider)
   }
 
-  // ── wheel ─────────────────────────────────────────────────────────────────
+  // ── coins ─────────────────────────────────────────────────────────────────
 
-  _drawWheel() {
-    const W = this.W
-    const numRowY  = WHEEL_TOP + Math.round(WHEEL_H / 2)  // vertical centre of number slots
-    const SLOT_W   = (W - 80) / WHEEL_VISIBLE
+  _drawCoins() {
+    const positions = buildCoinPositions()
+    this.coinObjects = positions.map((pos, idx) => {
+      const num  = idx + 1
+      const size = num <= 9 ? '16px' : '13px'
 
-    // Wheel area background
-    this.add.rectangle(W / 2, WHEEL_TOP + WHEEL_H / 2, W, WHEEL_H, 0x0d0d1a)
+      const g = this.add.graphics()
 
-    // Arrow buttons
-    this.leftBtn = this.add.text(22, numRowY, '‹', {
-      fontSize: '46px', fontFamily: 'Arial Black, Arial', color: palette.white,
-    }).setOrigin(0.5, 0.5).setInteractive({ useHandCursor: true })
-    this.leftBtn.on('pointerdown', () => this._spinWheel(-1))
+      const txt = this.add.text(pos.x, pos.y, String(num), {
+        fontSize: size, fontFamily: 'Arial Black, Arial', color: palette.coinText,
+      }).setOrigin(0.5, 0.5).setPadding({ top: 4 }).setDepth(2)
 
-    this.rightBtn = this.add.text(W - 22, numRowY, '›', {
-      fontSize: '46px', fontFamily: 'Arial Black, Arial', color: palette.white,
-    }).setOrigin(0.5, 0.5).setInteractive({ useHandCursor: true })
-    this.rightBtn.on('pointerdown', () => this._spinWheel(1))
+      const hitR  = COIN_R + 5
+      const zone  = this.add.zone(pos.x, pos.y, hitR * 2, hitR * 2)
+        .setInteractive({ useHandCursor: true }).setDepth(3)
+      zone.on('pointerup', () => this._onCoinClick(num))
 
-    // Number slots
-    const slotStartX = 40 + SLOT_W / 2
-    this.wheelSlots = Array.from({ length: WHEEL_VISIBLE }, (_, s) => {
-      const cx = slotStartX + s * SLOT_W
-      const bg  = this.add.graphics()
-      const txt = this.add.text(cx, numRowY, '', {
-        fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.white,
-      }).setOrigin(0.5, 0.5).setInteractive({ useHandCursor: true })
-      txt.on('pointerup', (_p, _lx, _ly, ev) => {
-        if (!this._dragMoved) { ev.stopPropagation(); this._onSlotClick(s) }
-      })
-      return { cx, cy: numRowY, slotW: SLOT_W, bg, txt }
+      return { num, x: pos.x, y: pos.y, g, txt }
     })
-
-    this._setupWheelDrag()
-    this._renderWheel()
+    this._renderCoins()
   }
 
-  _setupWheelDrag() {
-    const SLOT_W = (this.W - 80) / WHEEL_VISIBLE
-    this._dragLastX = null
-    this._dragAccum = 0
-    this._dragMoved = false
+  _renderCoins() {
+    if (!this.coinObjects) return
+    this.coinObjects.forEach(({ num, x, y, g, txt }) => {
+      g.clear()
+      const isSel = (num === this.selectedNum)
+      const size  = num <= 9 ? '16px' : '13px'
 
-    this.input.on('pointerdown', (ptr) => {
-      if (ptr.y < WHEEL_TOP || ptr.y > WHEEL_TOP + WHEEL_H) return
-      this._dragLastX = ptr.x
-      this._dragAccum = 0
-      this._dragMoved = false
-    })
-
-    this.input.on('pointermove', (ptr) => {
-      if (this._dragLastX === null || !ptr.isDown) return
-      if (this.isGameOver || this.isTransitioning) return
-      const dx = ptr.x - this._dragLastX
-      this._dragAccum -= dx   // swipe right → negative accum → spin(-1)
-      while (this._dragAccum >=  SLOT_W) { this._spinWheel(+1); this._dragAccum -= SLOT_W; this._dragMoved = true }
-      while (this._dragAccum <= -SLOT_W) { this._spinWheel(-1); this._dragAccum += SLOT_W; this._dragMoved = true }
-      this._dragLastX = ptr.x
-    })
-
-    this.input.on('pointerup', () => {
-      this._dragLastX = null
-      this._dragAccum = 0
-      this._dragMoved = false
+      if (isSel) {
+        g.fillStyle(C.btnBlue, 1)
+        g.fillCircle(x, y, COIN_R)
+        g.lineStyle(2.5, C.btnBlueHover, 1)
+        g.strokeCircle(x, y, COIN_R)
+        txt.setStyle({ fontSize: size, fontFamily: 'Arial Black, Arial', color: palette.scoreYellow })
+      } else {
+        g.fillStyle(C.coinSilver, 1)
+        g.fillCircle(x, y, COIN_R)
+        g.lineStyle(2, C.coinBorder, 1)
+        g.strokeCircle(x, y, COIN_R)
+        txt.setStyle({ fontSize: size, fontFamily: 'Arial Black, Arial', color: palette.coinText })
+      }
     })
   }
 
-  _spinWheel(dir) {
+  _onCoinClick(num) {
     if (this.isGameOver || this.isTransitioning) return
-    this.wheelCenter = ((this.wheelCenter - 1 + dir + WHEEL_NUMS) % WHEEL_NUMS) + 1
-    // Drop selection if it scrolled out of view
-    if (this.selectedNum !== null) {
-      const mid = Math.floor(WHEEL_VISIBLE / 2)
-      const visible = Array.from({ length: WHEEL_VISIBLE }, (_, s) =>
-        ((this.wheelCenter - 1 + (s - mid) + WHEEL_NUMS) % WHEEL_NUMS) + 1
-      )
-      if (!visible.includes(this.selectedNum)) this.selectedNum = null
-    }
-    this._renderWheel()
-  }
-
-  _onSlotClick(slotIdx) {
-    if (this.isGameOver || this.isTransitioning) return
-    const mid = Math.floor(WHEEL_VISIBLE / 2)
-    const num = ((this.wheelCenter - 1 + (slotIdx - mid) + WHEEL_NUMS) % WHEEL_NUMS) + 1
-
     if (this.selectedNum === num) {
       this._submitAnswer()
     } else {
-      // Spin so clicked number is centred, then select it
-      this.wheelCenter = num
       this.selectedNum = num
-      this._renderWheel()
+      this._renderCoins()
     }
   }
 
-  _renderWheel() {
-    const mid = Math.floor(WHEEL_VISIBLE / 2)
-
-    this.wheelSlots.forEach((slot, s) => {
-      const off = s - mid
-      const num = ((this.wheelCenter - 1 + off + WHEEL_NUMS) % WHEEL_NUMS) + 1
-      const { cx, cy, slotW, bg, txt } = slot
-      const dist = Math.abs(off)
-      const isSel = (num === this.selectedNum)
-
-      bg.clear()
-
-      if (isSel) {
-        bg.lineStyle(3, C.btnBlue, 1)
-        bg.strokeRoundedRect(cx - slotW / 2 + 3, cy - 28, slotW - 6, 56, 10)
-        bg.fillStyle(C.btnBlue, 0.25)
-        bg.fillRoundedRect(cx - slotW / 2 + 3, cy - 28, slotW - 6, 56, 10)
-        txt.setStyle({ fontSize: '34px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow })
-        txt.setAlpha(1)
-      } else if (dist === 0) {
-        bg.fillStyle(C.gameHeader, 1)
-        bg.fillRoundedRect(cx - slotW / 2 + 3, cy - 23, slotW - 6, 46, 8)
-        txt.setStyle({ fontSize: '28px', fontFamily: 'Arial Black, Arial', color: palette.white })
-        txt.setAlpha(1)
-      } else {
-        txt.setStyle({ fontSize: dist === 1 ? '22px' : '18px', fontFamily: 'Arial, Arial', color: palette.silverGray })
-        txt.setAlpha(dist === 1 ? 0.65 : 0.35)
-      }
-      txt.setText(String(num))
-    })
-
-  }
+  // ── answer submission ──────────────────────────────────────────────────────
 
   _submitAnswer() {
     if (this.isGameOver || this.isTransitioning) return
@@ -303,7 +266,7 @@ export default class GameScene extends Phaser.Scene {
   _showFeedback(isCorrect) {
     const W  = this.W
     const cx = W / 2
-    const cy = TABLE_TOP + TABLE_H / 2
+    const cy = TABLE_IMG_CY
 
     if (isCorrect) {
       this.score += 10
@@ -329,7 +292,6 @@ export default class GameScene extends Phaser.Scene {
         numText.setText(`${this.selectedNum} ✓`)
       } else {
         numText.setColor(palette.wrongRed)
-        // ✗ overlaid centred on the number, slightly larger to cross it out
         crossText = this.add.text(cx, cy, '✗', {
           fontSize: '110px', fontFamily: 'Arial Black, Arial', color: palette.wrongRed,
         }).setOrigin(0.5, 0.5).setDepth(21).setPadding({ top: 20 })
@@ -345,7 +307,7 @@ export default class GameScene extends Phaser.Scene {
       if (!isCorrect) {
         this.selectedNum = null
         this.isTransitioning = false
-        this._renderWheel()
+        this._renderCoins()
         return
       }
 
@@ -366,37 +328,38 @@ export default class GameScene extends Phaser.Scene {
 
   _startRound() {
     this.selectedNum  = null
-    this.wheelCenter  = 1
     this.currentOrder = this._getOrder()
     this.correctTotal = this.currentOrder.reduce((s, f) => s + f.price, 0)
     this._renderTable(this.tableContainer)
-    this._renderWheel()
+    this._renderCoins()
   }
 
   _renderTable(container) {
     container.removeAll(true)
     this.foodEmojiObjects = []
 
-    const W     = this.W
     const items = this.currentOrder
     const count = items.length
 
-    // Table image — fills full width, aspect ratio preserved
-    const img = this.add.image(W / 2, TABLE_TOP + TABLE_H / 2, 'restaurant-table')
-    img.setDisplaySize(W, TABLE_H)
+    // Table image fills the interior of the coin U
+    const img = this.add.image(TABLE_IMG_CX, TABLE_IMG_CY, 'restaurant-table')
+    img.setDisplaySize(TABLE_IMG_W, TABLE_IMG_H)
     container.add(img)
 
-    const areaX      = 36
-    const areaW      = W - 72
-    const bottomY    = TABLE_TOP + Math.round(TABLE_H * 0.58)
+    // Food placement area — inset from the coin column edges
+    const areaLeft   = COIN_LEFT_X + COIN_R + 8
+    const areaRight  = COIN_RIGHT_X - COIN_R - 8
+    const areaW      = areaRight - areaLeft
+    const bottomY    = TABLE_TOP + Math.round(TABLE_IMG_H * 0.55)
     const rowSpacing = 66
-    const bottomRow  = count > 4 ? items.slice(count - 4) : items
-    const topRow     = count > 4 ? items.slice(0, count - 4) : []
+
+    const bottomRow = count > 4 ? items.slice(count - 4) : items
+    const topRow    = count > 4 ? items.slice(0, count - 4) : []
 
     const placeRow = (row, cy) => {
       const itemW = areaW / row.length
       row.forEach((item, i) => {
-        const cx = areaX + itemW * i + itemW / 2
+        const cx = areaLeft + itemW * i + itemW / 2
         const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' })
           .setOrigin(0.5, 0.5).setPadding({ top: 16 })
         container.add(em)
@@ -440,13 +403,12 @@ export default class GameScene extends Phaser.Scene {
       if (this.isGameOver) return
 
       this.selectedNum  = null
-      this.wheelCenter  = 1
       this.currentOrder = this._getOrder()
       this.correctTotal = this.currentOrder.reduce((s, f) => s + f.price, 0)
 
       this._renderTable(this.tableContainer)
       this.foodEmojiObjects.forEach(em => em.setAlpha(0))
-      this._renderWheel()
+      this._renderCoins()
 
       // Appear one by one
       const incoming = [...this.foodEmojiObjects]
