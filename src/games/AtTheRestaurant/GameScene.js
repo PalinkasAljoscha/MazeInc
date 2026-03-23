@@ -13,18 +13,18 @@ const WHEEL_VISIBLE = 7     // how many slots are shown at once
 const ALL_FOODS = [
   { id: 'fries',      emoji: '🍟', minPrice: 1, maxPrice: 3  },
   { id: 'coffee',     emoji: '☕', minPrice: 1, maxPrice: 3  },
-  { id: 'lemonade',   emoji: '🍹', minPrice: 2, maxPrice: 4  },
-  { id: 'icecream',   emoji: '🍦', minPrice: 2, maxPrice: 4  },
+  { id: 'lemonade',   emoji: '🍹', minPrice: 2, maxPrice: 3  },
+  { id: 'icecream',   emoji: '🍦', minPrice: 2, maxPrice: 3  },
   { id: 'fruitsalad', emoji: '🍓', minPrice: 1, maxPrice: 3  },
-  { id: 'dimsum',     emoji: '🥟', minPrice: 2, maxPrice: 5  },
-  { id: 'taco',       emoji: '🌮', minPrice: 2, maxPrice: 5  },
-  { id: 'cake',       emoji: '🍰', minPrice: 4, maxPrice: 6  },
-  { id: 'pizza',      emoji: '🍕', minPrice: 3, maxPrice: 8  },
+  { id: 'dimsum',     emoji: '🥟', minPrice: 2, maxPrice: 4  },
+  { id: 'taco',       emoji: '🌮', minPrice: 2, maxPrice: 4  },
+  { id: 'cake',       emoji: '🍰', minPrice: 3, maxPrice: 5  },
+  { id: 'pizza',      emoji: '🍕', minPrice: 3, maxPrice: 5  },
   { id: 'croissant',  emoji: '🥐', minPrice: 1, maxPrice: 3  },
-  { id: 'flatbread',  emoji: '🥙', minPrice: 4, maxPrice: 9  },
-  { id: 'burger',     emoji: '🍔', minPrice: 4, maxPrice: 9  },
-  { id: 'fondue',     emoji: '🫕', minPrice: 6, maxPrice: 10 },
-  { id: 'nigiri',     emoji: '🍣', minPrice: 7, maxPrice: 12 },
+  { id: 'flatbread',  emoji: '🥙', minPrice: 3, maxPrice: 5  },
+  { id: 'burger',     emoji: '🍔', minPrice: 4, maxPrice: 6  },
+  { id: 'fondue',     emoji: '🫕', minPrice: 5, maxPrice: 7  },
+  { id: 'nigiri',     emoji: '🍣', minPrice: 5, maxPrice: 7  },
 ]
 
 // ── layout zones (y px, top of each zone) ────────────────────────────────────
