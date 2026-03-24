@@ -73,6 +73,10 @@
       "moves": "Moves",
       "undos": "Undos"
     },
+    "variant": {
+      "classic": "Classic",
+      "revert": "Auto-Undo"
+    },
     "gameOver": {
       "title": "Blocked! 🧱",
       "heightLabel": "Height reached",

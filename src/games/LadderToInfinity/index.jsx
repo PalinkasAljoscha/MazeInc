@@ -9,6 +9,7 @@ import { findRepeatSeq } from '../shared/repeatSeq.js'
 const BOARD_WIDTH_BY_LEVEL = { 4: 3, 5: 2 }
 const VISIBLE_ROWS = 12
 const MOVE_DELTA = { U: [0, 1], L: [-1, 0], R: [1, 0] }
+const FLASH_DURATION = 1600
 
 // Board (col, row) → SVG (x, y). viewOffset = bottom row currently visible.
 function toSvg(col, row, viewOffset) {
@@ -20,6 +21,7 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   const { t } = useTranslation()
   const BOARD_WIDTH = BOARD_WIDTH_BY_LEVEL[level] ?? 2
 
+  const [variantMode, setVariantMode] = useState('classic')  // 'classic' | 'revert'
   const [pos, setPos] = useState([0, 0])
   const [seq, setSeq] = useState('')
   const [history, setHistory] = useState([[0, 0]])
@@ -39,8 +41,18 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   const maxScrollOffset = totalRows - VISIBLE_ROWS
   const viewOffset = userScrollOffset !== null ? userScrollOffset : playerViewOffset
 
+  // ── Variant toggle ───────────────────────────────────────────────────────
+  const switchVariant = useCallback((mode) => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    setFlash(null)
+    setVariantMode(mode)
+  }, [])
+
   // ── Move logic ───────────────────────────────────────────────────────────
   const tryMove = useCallback((dir) => {
+    // In revert mode, block input while the flash/revert animation is running
+    if (flash && variantMode === 'revert') return
+
     const [dc, dr] = MOVE_DELTA[dir]
     const [col, row] = pos
     const nc = col + dc
@@ -54,7 +66,36 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
     if (repeat) {
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
       setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: [nc, nr] })
-      flashTimerRef.current = setTimeout(() => setFlash(null), 1600)
+
+      if (variantMode === 'revert') {
+        // Capture state now — the auto-revert will restore to history[repeat.start]
+        const revertStart    = repeat.start
+        const capturedHistory = history
+        const capturedSeq    = seq
+
+        flashTimerRef.current = setTimeout(() => {
+          const newHistory    = capturedHistory.slice(0, revertStart + 1)
+          const newPos        = newHistory[newHistory.length - 1]
+          const newRevSeq     = capturedSeq.slice(0, revertStart)
+          const newMaxRow     = newHistory.reduce((m, [, r]) => Math.max(m, r), 0)
+          const stepsReverted = capturedHistory.length - 1 - revertStart
+
+          setFlash(null)
+          setHistory(newHistory)
+          setPos(newPos)
+          setSeq(newRevSeq)
+          setMaxRow(newMaxRow)
+          if (stepsReverted > 0) setUndoCount(c => c + stepsReverted)
+          // Scroll down only if player has gone below the visible area after revert.
+          // Place player at the middle of the view (not higher), per rule 2.
+          setPlayerViewOffset(prev => newPos[1] < prev
+            ? Math.max(0, newPos[1] - Math.floor(VISIBLE_ROWS / 2))
+            : prev
+          )
+        }, FLASH_DURATION)
+      } else {
+        flashTimerRef.current = setTimeout(() => setFlash(null), FLASH_DURATION)
+      }
       return
     }
 
@@ -65,18 +106,18 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
     const newTotalRows = Math.max(VISIBLE_ROWS, newMaxRow + 3)
     const newMaxScrollOffset = newTotalRows - VISIBLE_ROWS
 
-    // Auto-scroll: when player reaches the top visible row, scroll up
+    // Auto-scroll: when player reaches the top visible row, scroll up.
+    // Never scroll down automatically — playerViewOffset only ever increases here.
     const newPlayerOffset = nr >= playerViewOffset + VISIBLE_ROWS - 1
       ? Math.min(newMaxScrollOffset, nr - VISIBLE_ROWS + 2)
-      : Math.min(playerViewOffset, newMaxScrollOffset)
+      : playerViewOffset
 
     setPos(newPos)
     setSeq(newSeq)
     setHistory(newHistory)
     setMaxRow(newMaxRow)
     setPlayerViewOffset(newPlayerOffset)
-    setUserScrollOffset(null)  // re-lock to player on every move
-  }, [pos, seq, history, maxRow, playerViewOffset])
+  }, [pos, seq, history, maxRow, playerViewOffset, variantMode, flash, BOARD_WIDTH])
 
   // ── Undo ──────────────────────────────────────────────────────────────────
   const undo = useCallback(() => {
@@ -146,10 +187,13 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
     setUserScrollOffset(Math.max(0, Math.min(maxScrollOffset, offset)))
   }, [maxScrollOffset])
 
-  // Thumb at top = seeing highest rows (viewOffset = maxScrollOffset)
+  // Thumb at top = seeing highest rows (viewOffset = maxScrollOffset).
+  // Clamp for thumb calc: playerViewOffset can exceed maxScrollOffset temporarily after
+  // an auto-undo (intentional — avoids snapping the view down on the next move).
   const thumbHeightFrac = maxScrollOffset > 0 ? Math.min(1, VISIBLE_ROWS / totalRows) : 1
+  const thumbViewOffset = Math.min(viewOffset, maxScrollOffset)
   const thumbTopFrac = maxScrollOffset > 0
-    ? (1 - viewOffset / maxScrollOffset) * (1 - thumbHeightFrac)
+    ? (1 - thumbViewOffset / maxScrollOffset) * (1 - thumbHeightFrac)
     : 0
 
   // ── Render data ───────────────────────────────────────────────────────────
@@ -166,32 +210,63 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
     >
       {/* ── HUD ── */}
       <div
-        className="flex items-center justify-around px-4 py-2 shrink-0"
+        className="flex flex-col shrink-0"
         style={{ background: palette.gameHeader, borderBottom: `1px solid ${palette.divider}` }}
       >
-        <div className="text-center">
-          <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('ladder.hud.height')}
+        {/* Stats row */}
+        <div className="flex items-center justify-around px-4 pt-2 pb-1">
+          <div className="text-center">
+            <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
+              {t('ladder.hud.height')}
+            </div>
+            <div className="text-3xl font-black" style={{ color: palette.scoreYellow }}>
+              {maxRow}
+            </div>
           </div>
-          <div className="text-3xl font-black" style={{ color: palette.scoreYellow }}>
-            {maxRow}
+          <div className="text-center">
+            <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
+              {t('ladder.hud.moves')}
+            </div>
+            <div className="text-3xl font-black" style={{ color: palette.white }}>
+              {seq.length}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
+              {t('ladder.hud.undos')}
+            </div>
+            <div className="text-3xl font-black" style={{ color: palette.objBasicTeal }}>
+              {undoCount}
+            </div>
           </div>
         </div>
-        <div className="text-center">
-          <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('ladder.hud.moves')}
-          </div>
-          <div className="text-3xl font-black" style={{ color: palette.white }}>
-            {seq.length}
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="text-xs font-bold" style={{ color: palette.silverGray }}>
-            {t('ladder.hud.undos')}
-          </div>
-          <div className="text-3xl font-black" style={{ color: palette.objBasicTeal }}>
-            {undoCount}
-          </div>
+
+        {/* Variant toggle row */}
+        <div className="flex justify-center items-center pb-2 gap-1">
+          <button
+            onClick={() => switchVariant('classic')}
+            className="text-xs font-bold px-3 py-0.5 rounded-l-full border-r-0"
+            style={{
+              background: variantMode === 'classic' ? palette.btnBlue : 'transparent',
+              color: variantMode === 'classic' ? palette.white : palette.silverGray,
+              border: `1px solid ${palette.divider}`,
+              borderRight: 'none',
+            }}
+          >
+            {t('ladder.variant.classic')}
+          </button>
+          <button
+            onClick={() => switchVariant('revert')}
+            className="text-xs font-bold px-3 py-0.5 rounded-r-full"
+            style={{
+              background: variantMode === 'revert' ? palette.objBasicPink : 'transparent',
+              color: variantMode === 'revert' ? palette.white : palette.silverGray,
+              border: `1px solid ${palette.divider}`,
+              borderLeft: 'none',
+            }}
+          >
+            {t('ladder.variant.revert')}
+          </button>
         </div>
       </div>
 

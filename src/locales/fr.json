@@ -73,6 +73,10 @@
       "moves": "Coups",
       "undos": "Retours"
     },
+    "variant": {
+      "classic": "Classique",
+      "revert": "Auto-retour"
+    },
     "gameOver": {
       "title": "Bloqué ! 🧱",
       "heightLabel": "Hauteur atteinte",

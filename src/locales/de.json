@@ -72,6 +72,10 @@
       "moves": "Züge",
       "undos": "Rückgängig"
     },
+    "variant": {
+      "classic": "Klassisch",
+      "revert": "Auto-Zurück"
+    },
     "gameOver": {
       "title": "Blockiert! 🧱",
       "heightLabel": "Erreichte Höhe",
