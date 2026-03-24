@@ -90,9 +90,11 @@ export default class GameScene extends Phaser.Scene {
     this.score            = 0
     this.isGameOver       = false
     this.isTransitioning  = false
+    this.timesUp          = false
     this.foodEmojiObjects = []
     this.selectedNum      = null
     this.coinObjects      = []
+    this.timesUpBanner    = null
 
     // Background
     this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
@@ -305,13 +307,14 @@ export default class GameScene extends Phaser.Scene {
       if (crossText) crossText.destroy()
 
       if (!isCorrect) {
+        if (this.timesUp) { this._doGameOver(); return }
         this.selectedNum = null
         this.isTransitioning = false
         this._renderCoins()
         return
       }
 
-      // Show full price formula for 1.5 s, then switch table
+      // Show full price formula for 1.5 s, then switch table (or end if time's up)
       const formula = this.currentOrder.map(f => f.price).join(' + ') + ' = ' + this.correctTotal
       const formulaText = this.add.text(cx, cy, formula, {
         fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
@@ -319,7 +322,7 @@ export default class GameScene extends Phaser.Scene {
 
       this.time.delayedCall(1500, () => {
         formulaText.destroy()
-        this._nextRound()
+        if (this.timesUp) { this._doGameOver() } else { this._nextRound() }
       })
     })
   }
@@ -357,9 +360,12 @@ export default class GameScene extends Phaser.Scene {
     const topRow    = count > 4 ? items.slice(0, count - 4) : []
 
     const placeRow = (row, cy) => {
-      const itemW = areaW / row.length
+      const squeeze   = row.length === 4 ? 0.88 : 1
+      const rowW      = areaW * squeeze
+      const rowLeft   = areaLeft + (areaW - rowW) / 2
+      const itemW     = rowW / row.length
       row.forEach((item, i) => {
-        const cx = areaLeft + itemW * i + itemW / 2
+        const cx = rowLeft + itemW * i + itemW / 2
         const em = this.add.text(cx, cy, item.emoji, { fontSize: '56px' })
           .setOrigin(0.5, 0.5).setPadding({ top: 16 })
         container.add(em)
@@ -426,10 +432,28 @@ export default class GameScene extends Phaser.Scene {
 
   // ── end game ─────────────────────────────────────────────────────────────
 
+  // Called by the countdown timer when it hits zero.
+  // Instead of ending immediately, we wait for the current answer.
   endGame() {
+    if (this.isGameOver || this.timesUp) return
+    if (this.timerEvent) this.timerEvent.remove()
+    this.timesUp = true
+
+    // Show a hint banner so the player knows to finish this table
+    const W = this.W
+    this.timesUpBanner = this.add.text(W / 2, HUD_H / 2, i18n.t('atRestaurant.lastAnswer'), {
+      fontSize: '18px', fontFamily: 'Arial Black, Arial', color: palette.wrongRed,
+    }).setOrigin(0.5, 0.5).setDepth(10)
+
+    // If mid-feedback animation, _showFeedback will call _doGameOver when done
+    // If waiting for input, player must click a coin to end the game
+  }
+
+  // Shows the game-over panel and emits the completion event.
+  _doGameOver() {
     if (this.isGameOver) return
     this.isGameOver = true
-    if (this.timerEvent) this.timerEvent.remove()
+    if (this.timesUpBanner) { this.timesUpBanner.destroy(); this.timesUpBanner = null }
 
     buildGameOverPanel(this, {
       W: this.W, H: this.H,

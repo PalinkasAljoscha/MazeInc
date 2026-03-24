@@ -60,6 +60,7 @@
     "menu": {
       "title": "📋 MENU"
     },
+    "lastAnswer": "⏰ Dernière réponse !",
     "gameOver": {
       "title": "Temps écoulé ! 🍽️",
       "scoreLabel": "Ton score :",
