@@ -144,7 +144,7 @@
     "retry": "Réessayer",
     "invalid": "{{count}} mouvement(s) invalide(s) — réessaie !",
     "wonTitle": "Résolu ! 🎉",
-    "movesLabel": "Coups",
+    "timeLabel": "Temps",
     "playAgain": "Rejouer"
   },
   "multiplesCatcher": {

@@ -144,7 +144,7 @@
     "retry": "Retry",
     "invalid": "{{count}} invalid move(s) — try again!",
     "wonTitle": "Solved! 🎉",
-    "movesLabel": "Moves",
+    "timeLabel": "Time",
     "playAgain": "Play Again"
   },
   "multiplesCatcher": {

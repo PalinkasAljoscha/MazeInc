@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
@@ -196,6 +196,9 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const [validated, setValidated]   = useState(false)
   const [invalidSteps, setInvalidSteps] = useState(new Set())
   const [won, setWon]               = useState(false)
+  const [elapsedSec, setElapsedSec] = useState(0)
+
+  const startRef = useRef(Date.now())
 
   const atGoal = pos[0] === cols - 1 && pos[1] === rows - 1
 
@@ -255,6 +258,8 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     setInvalidSteps(invalid)
     setValidated(true)
     if (invalid.size === 0) {
+      const sec = Math.round((Date.now() - startRef.current) / 1000)
+      setElapsedSec(sec)
       setWon(true)
       onComplete?.({ correct: true, score: history.length - 1 })
     }
@@ -267,6 +272,8 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     setValidated(false)
     setInvalidSteps(new Set())
     setWon(false)
+    setElapsedSec(0)
+    startRef.current = Date.now()
   }, [])
 
   // ── SVG helpers ──────────────────────────────────────────────────────────
@@ -465,8 +472,8 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
               {t('numberLabyrinth.wonTitle')}
             </div>
             <div className="text-lg mb-7" style={{ color: palette.silverGray }}>
-              {t('numberLabyrinth.movesLabel')}:{' '}
-              <span className="font-black" style={{ color: palette.white }}>{history.length - 1}</span>
+              {t('numberLabyrinth.timeLabel')}:{' '}
+              <span className="font-black" style={{ color: palette.white }}>{elapsedSec}s</span>
             </div>
             <button
               onClick={handleRetry}

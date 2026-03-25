@@ -143,7 +143,7 @@
     "retry": "Nochmal versuchen",
     "invalid": "{{count}} ungültiger Zug/ungültige Züge — versuch's nochmal!",
     "wonTitle": "Gelöst! 🎉",
-    "movesLabel": "Züge",
+    "timeLabel": "Zeit",
     "playAgain": "Nochmal spielen"
   },
   "multiplesCatcher": {
