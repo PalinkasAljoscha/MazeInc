@@ -95,12 +95,36 @@ Always start a new session by creating or checking out the appropriate feature b
 Each game exports:
 ```jsx
 export default function MyGame({ level, speed, onComplete }) { ... }
-export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
+export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel, minScreenWidth, minScreenHeight }
 ```
 
 **Level system** — each game defines a `LEVELS` object in `GameScene.js` keyed by level number. The React wrapper passes the chosen level into Phaser via `game.registry.set('level', level)`; the scene reads it back in `create()` with `this.registry.get('level')`.
 
 **Speed system** — games that support variable speed set `hasSpeed: true` in the `GAMES` array in `App.jsx`. The selected value (1–5, default 4) is passed as a `speed` prop to the game component, which pushes it to Phaser via `game.registry.set('speed', speed)`. In `GameScene.js`, read it in `create()` with `this.registry.get('speed') ?? 4` and apply `SPEED_DIAL = [0, 0.5, 0.7, 0.85, 1.0, 1.3]` (index = dial value) to a `*_BASE` constant so that dial 4 matches the original design speed.
+
+**Screen size classification** — every game declares the minimum screen dimensions required for comfortable play, as CSS pixel values (i.e. `window.innerWidth` / `window.innerHeight`, not physical pixels):
+
+```js
+minScreenWidth:  320,  // minimum CSS px width
+minScreenHeight: 480,  // minimum CSS px height
+```
+
+These values live in `meta` (the source of truth) and are mirrored into the `GAMES` array in `App.jsx` for runtime use. To filter games suitable for the current device:
+
+```js
+const screenW = window.innerWidth
+const screenH = window.innerHeight
+const playableGames = GAMES.filter(g => screenW >= g.minScreenWidth && screenH >= g.minScreenHeight)
+```
+
+**Choosing values for a new game** — set `minScreenWidth` and `minScreenHeight` to the smallest screen on which the game is genuinely comfortable, not merely functional. Guidelines by game shape:
+
+- **Portrait / arcade games** (Phaser canvas 480×680, vertical action): `320 × 480` — fits any modern phone in portrait.
+- **Portrait with a wide grid** (e.g. Balance, 8-column board): `360 × 520` — needs a mid-size phone or larger.
+- **Square grid games** (board fills a square region): set both values equal to the minimum side length at which the smallest board size is comfortable, e.g. `400 × 400`. Equal values signal to future readers that the game needs square space rather than portrait space.
+- **Landscape-first games** (wider than tall): set `minScreenWidth > minScreenHeight` accordingly.
+
+The Phaser internal canvas (480×680) scales via FIT mode and does not change — `minScreenWidth`/`minScreenHeight` describe the *host device*, not the canvas. For React/SVG games the values directly bound the usable drawing area.
 
 **Home page tiles** — each game card is a compact horizontal strip: emoji top-left, `▶` play button top-right, game title + description (up to 3 lines) spanning full width below. No level/speed controls on the tile. Clicking `▶` opens the Settings popup.
 
@@ -123,9 +147,9 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 
 **Adding a new game:**
 1. Create `src/games/MyGame/index.jsx` (React wrapper) and `GameScene.js` (Phaser scene with `LEVELS` config)
-2. Export `default` component and `meta` (including `minLevel`/`maxLevel`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
+2. Export `default` component and `meta` (including `minLevel`/`maxLevel`, `minScreenWidth`, `minScreenHeight`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
 3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx`
-4. Import component and meta into `App.jsx`; add a single entry to `GAMES` with `component`, `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, and `hasSpeed` if applicable
+4. Import component and meta into `App.jsx`; add a single entry to `GAMES` with `component`, `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, `minScreenWidth`, `minScreenHeight`, and `hasSpeed` if applicable — source the screen size fields from meta: `minScreenWidth: myGameMeta.minScreenWidth`
 5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json` and `fr.json`
 6. Create asset folders: `src/games/MyGame/assets/` (React-side) and `public/games/<meta.id>/` (Phaser-side), each with a `.gitkeep` if empty
 
@@ -143,5 +167,6 @@ export const meta = { id, title, topics, minAge, maxAge, minLevel, maxLevel }
 ## Notes / Open Decisions
 
 - Sound effects deferred (needs user gesture on mobile to unlock audio)
+- Screen size classification introduced (2026-03-25): each game's `meta` carries `minScreenWidth` + `minScreenHeight` (CSS px). Games are classified by these two values rather than a layout-type string — the pair is more precise, handles landscape orientation correctly, and directly informs both runtime filtering and game design. The `GAMES` array in `App.jsx` mirrors these fields from `meta`; actual filtering logic (e.g. hiding games on small phones) is not yet wired into the home page UI.
 
 *Update this file at the end of each session with decisions made.*
