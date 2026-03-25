@@ -88,7 +88,14 @@
     "won": "You made it! 🎉",
     "movesLabel": "Moves",
     "timeLabel": "Time",
-    "playAgain": "Play Again"
+    "playAgain": "Play Again",
+    "variant": {
+      "classic": "Classic",
+      "revert": "Auto-Undo"
+    },
+    "hud": {
+      "undos": "Undos"
+    }
   },
   "balance": {
     "hud": {

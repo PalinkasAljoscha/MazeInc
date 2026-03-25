@@ -87,7 +87,14 @@
     "won": "Geschafft! 🎉",
     "movesLabel": "Züge",
     "timeLabel": "Zeit",
-    "playAgain": "Nochmal spielen"
+    "playAgain": "Nochmal spielen",
+    "variant": {
+      "classic": "Klassisch",
+      "revert": "Auto-Zurück"
+    },
+    "hud": {
+      "undos": "Rückgängig"
+    }
   },
   "balance": {
     "hud": {

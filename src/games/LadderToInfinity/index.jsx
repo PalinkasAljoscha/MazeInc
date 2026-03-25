@@ -10,6 +10,8 @@ const BOARD_WIDTH_BY_LEVEL = { 4: 3, 5: 2 }
 const VISIBLE_ROWS = 12
 const MOVE_DELTA = { U: [0, 1], L: [-1, 0], R: [1, 0] }
 const FLASH_DURATION = 1600
+const REVERT_INITIAL_DELAY = 350   // ms pause before first step-back
+const REVERT_STEP_MS = 100         // ms per step-back in revert animation
 
 // Board (col, row) → SVG (x, y). viewOffset = bottom row currently visible.
 function toSvg(col, row, viewOffset) {
@@ -32,9 +34,13 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   const [userScrollOffset, setUserScrollOffset] = useState(null) // null = follow player
 
   const flashTimerRef = useRef(null)
+  const revertAnimRef = useRef([])
   const scrollbarRef = useRef(null)
 
-  useEffect(() => () => { if (flashTimerRef.current) clearTimeout(flashTimerRef.current) }, [])
+  useEffect(() => () => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+  }, [])
 
   // Derived scroll values
   const totalRows = Math.max(VISIBLE_ROWS, maxRow + 3)
@@ -44,6 +50,8 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   // ── Variant toggle ───────────────────────────────────────────────────────
   const switchVariant = useCallback((mode) => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+    revertAnimRef.current = []
     setFlash(null)
     setVariantMode(mode)
   }, [])
@@ -65,35 +73,55 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
 
     if (repeat) {
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-      setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: [nc, nr] })
+      revertAnimRef.current.forEach(t => clearTimeout(t))
+      revertAnimRef.current = []
 
       if (variantMode === 'revert') {
-        // Capture state now — the auto-revert will restore to history[repeat.start]
-        const revertStart    = repeat.start
-        const capturedHistory = history
-        const capturedSeq    = seq
+        // Apply the move immediately so the figure steps to the new position first.
+        const newFullHistory = [...history, [nc, nr]]
+        const newMaxRowVal = Math.max(maxRow, nr)
+        const newTotalRows = Math.max(VISIBLE_ROWS, newMaxRowVal + 3)
+        const newMaxScrollOff = newTotalRows - VISIBLE_ROWS
+        const newPlayerOffset = nr >= playerViewOffset + VISIBLE_ROWS - 1
+          ? Math.min(newMaxScrollOff, nr - VISIBLE_ROWS + 2)
+          : playerViewOffset
 
-        flashTimerRef.current = setTimeout(() => {
-          const newHistory    = capturedHistory.slice(0, revertStart + 1)
-          const newPos        = newHistory[newHistory.length - 1]
-          const newRevSeq     = capturedSeq.slice(0, revertStart)
-          const newMaxRow     = newHistory.reduce((m, [, r]) => Math.max(m, r), 0)
-          const stepsReverted = capturedHistory.length - 1 - revertStart
+        setPos([nc, nr])
+        setSeq(newSeq)
+        setHistory(newFullHistory)
+        setMaxRow(newMaxRowVal)
+        setPlayerViewOffset(newPlayerOffset)
+        setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: null })
 
-          setFlash(null)
-          setHistory(newHistory)
-          setPos(newPos)
-          setSeq(newRevSeq)
-          setMaxRow(newMaxRow)
-          if (stepsReverted > 0) setUndoCount(c => c + stepsReverted)
-          // Scroll down only if player has gone below the visible area after revert.
-          // Place player at the middle of the view (not higher), per rule 2.
-          setPlayerViewOffset(prev => newPos[1] < prev
-            ? Math.max(0, newPos[1] - Math.floor(VISIBLE_ROWS / 2))
-            : prev
-          )
-        }, FLASH_DURATION)
+        // Animate backwards: remove one step every REVERT_STEP_MS after initial pause.
+        const targetIdx = repeat.start
+        const stepsToRemove = newFullHistory.length - 1 - targetIdx
+        const timeouts = []
+        for (let i = 0; i < stepsToRemove; i++) {
+          const t = setTimeout(() => {
+            const newH = newFullHistory.slice(0, newFullHistory.length - (i + 1))
+            const newP = newH[newH.length - 1]
+            const newS = newSeq.slice(0, newH.length - 1)
+            const newMR = newH.reduce((m, [, r]) => Math.max(m, r), 0)
+            setHistory(newH)
+            setPos(newP)
+            setSeq(newS)
+            setMaxRow(newMR)
+            setUserScrollOffset(null)
+            setPlayerViewOffset(prev => newP[1] < prev
+              ? Math.max(0, newP[1] - Math.floor(VISIBLE_ROWS / 2))
+              : prev
+            )
+            if (i === stepsToRemove - 1) {
+              setFlash(null)
+              setUndoCount(c => c + stepsToRemove)
+            }
+          }, REVERT_INITIAL_DELAY + i * REVERT_STEP_MS)
+          timeouts.push(t)
+        }
+        revertAnimRef.current = timeouts
       } else {
+        setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: [nc, nr] })
         flashTimerRef.current = setTimeout(() => setFlash(null), FLASH_DURATION)
       }
       return
@@ -164,6 +192,8 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   // ── Reset ─────────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+    revertAnimRef.current = []
     setPos([0, 0])
     setSeq('')
     setHistory([[0, 0]])
@@ -197,7 +227,7 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
     : 0
 
   // ── Render data ───────────────────────────────────────────────────────────
-  const displayHistory = flash ? [...history, flash.proposedPos] : history
+  const displayHistory = (flash && flash.proposedPos) ? [...history, flash.proposedPos] : history
 
   const pad = 0.4
   const vbW = BOARD_WIDTH + 2 * pad

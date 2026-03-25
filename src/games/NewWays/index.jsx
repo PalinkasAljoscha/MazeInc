@@ -13,6 +13,9 @@ const LEVELS = {
 }
 
 const MOVE_DELTA = { U: [0, 1], D: [0, -1], L: [-1, 0], R: [1, 0] }
+const FLASH_DURATION = 1600
+const REVERT_INITIAL_DELAY = 350   // ms pause before first step-back
+const REVERT_STEP_MS = 100         // ms per step-back in revert animation
 
 // Board (col, row) → SVG center (x, y).
 // Board: (0,0) = bottom-left; SVG: (0,0) = top-left → flip row axis.
@@ -26,15 +29,18 @@ export default function NewWays({ level = 2, onComplete }) {
   const { size, blocked } = LEVELS[level] ?? LEVELS[2]
   const target = [size - 1, size - 1]
 
+  const [variantMode, setVariantMode] = useState('classic')  // 'classic' | 'revert'
   const [pos, setPos] = useState([0, 0])
   const [seq, setSeq] = useState('')
   const [history, setHistory] = useState([[0, 0]])
   const [won, setWon] = useState(false)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [flash, setFlash] = useState(null)   // { start, unitLen, proposedPos }
+  const [undoCount, setUndoCount] = useState(0)
 
   const startRef = useRef(Date.now())
   const flashTimerRef = useRef(null)
+  const revertAnimRef = useRef([])
 
   // ── Elapsed timer (runs until won) ───────────────────────────────────────
   useEffect(() => {
@@ -44,11 +50,26 @@ export default function NewWays({ level = 2, onComplete }) {
   }, [won])
 
   // Cleanup flash timer on unmount
-  useEffect(() => () => { if (flashTimerRef.current) clearTimeout(flashTimerRef.current) }, [])
+  useEffect(() => () => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+  }, [])
+
+  // ── Variant toggle ───────────────────────────────────────────────────────
+  const switchVariant = useCallback((mode) => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+    revertAnimRef.current = []
+    setFlash(null)
+    setVariantMode(mode)
+  }, [])
 
   // ── Attempt a move in direction dir ──────────────────────────────────────
   const tryMove = useCallback((dir) => {
     if (won) return
+    // In revert mode, block input while the flash/revert animation is running
+    if (flash && variantMode === 'revert') return
+
     const [dc, dr] = MOVE_DELTA[dir]
     const [col, row] = pos
     const nc = col + dc
@@ -62,8 +83,41 @@ export default function NewWays({ level = 2, onComplete }) {
 
     if (repeat) {
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-      setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: [nc, nr] })
-      flashTimerRef.current = setTimeout(() => setFlash(null), 1600)
+      revertAnimRef.current.forEach(t => clearTimeout(t))
+      revertAnimRef.current = []
+
+      if (variantMode === 'revert') {
+        // Apply the move immediately so the figure steps to the new position first.
+        const newFullHistory = [...history, [nc, nr]]
+        setPos([nc, nr])
+        setSeq(newSeq)
+        setHistory(newFullHistory)
+        setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: null })
+
+        // Animate backwards: remove one step every REVERT_STEP_MS after initial pause.
+        const targetIdx = repeat.start
+        const stepsToRemove = newFullHistory.length - 1 - targetIdx
+        const timeouts = []
+        for (let i = 0; i < stepsToRemove; i++) {
+          const t = setTimeout(() => {
+            const newH = newFullHistory.slice(0, newFullHistory.length - (i + 1))
+            const newP = newH[newH.length - 1]
+            const newS = newSeq.slice(0, newH.length - 1)
+            setHistory(newH)
+            setPos(newP)
+            setSeq(newS)
+            if (i === stepsToRemove - 1) {
+              setFlash(null)
+              setUndoCount(c => c + stepsToRemove)
+            }
+          }, REVERT_INITIAL_DELAY + i * REVERT_STEP_MS)
+          timeouts.push(t)
+        }
+        revertAnimRef.current = timeouts
+      } else {
+        setFlash({ start: repeat.start, unitLen: repeat.unit.length, proposedPos: [nc, nr] })
+        flashTimerRef.current = setTimeout(() => setFlash(null), FLASH_DURATION)
+      }
       return
     }
 
@@ -80,7 +134,7 @@ export default function NewWays({ level = 2, onComplete }) {
       setElapsedMs(elapsed)
       onComplete?.({ correct: true, score: newSeq.length })
     }
-  }, [pos, seq, history, won, size, blocked, target, onComplete])
+  }, [pos, seq, history, won, size, blocked, target, onComplete, variantMode, flash])
 
   // ── Keyboard control ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -106,19 +160,22 @@ export default function NewWays({ level = 2, onComplete }) {
   // ── Reset ─────────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    revertAnimRef.current.forEach(t => clearTimeout(t))
+    revertAnimRef.current = []
     setPos([0, 0])
     setSeq('')
     setHistory([[0, 0]])
     setWon(false)
     setFlash(null)
     setElapsedMs(0)
+    setUndoCount(0)
     startRef.current = Date.now()
   }, [])
 
   // ── Derived rendering data ────────────────────────────────────────────────
   // During a flash: extend the path by the proposed (rejected) position so
   // the full repeat can be visualised in context.
-  const displayHistory = flash ? [...history, flash.proposedPos] : history
+  const displayHistory = (flash && flash.proposedPos) ? [...history, flash.proposedPos] : history
 
   const formatTime = (ms) => {
     const s = Math.floor(ms / 1000)
@@ -133,9 +190,45 @@ export default function NewWays({ level = 2, onComplete }) {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
-      className="w-full h-full flex items-center justify-center relative"
+      className="w-full h-full flex flex-col"
       style={{ background: palette.gameBg }}
     >
+      {/* ── HUD bar ── */}
+      <div
+        className="shrink-0 flex justify-center items-center gap-3 px-4 py-2"
+        style={{ background: palette.gameHeader, borderBottom: `1px solid ${palette.divider}` }}
+      >
+        {/* Variant toggle */}
+        <div className="flex">
+          <button
+            onClick={() => switchVariant('classic')}
+            className="text-xs font-bold px-3 py-0.5 rounded-l-full"
+            style={{
+              background: variantMode === 'classic' ? palette.btnBlue : 'transparent',
+              color: variantMode === 'classic' ? palette.white : palette.silverGray,
+              border: `1px solid ${palette.divider}`,
+              borderRight: 'none',
+            }}
+          >
+            {t('newWays.variant.classic')}
+          </button>
+          <button
+            onClick={() => switchVariant('revert')}
+            className="text-xs font-bold px-3 py-0.5 rounded-r-full"
+            style={{
+              background: variantMode === 'revert' ? palette.objBasicPink : 'transparent',
+              color: variantMode === 'revert' ? palette.white : palette.silverGray,
+              border: `1px solid ${palette.divider}`,
+              borderLeft: 'none',
+            }}
+          >
+            {t('newWays.variant.revert')}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Board area ── */}
+      <div className="flex-1 min-h-0 flex items-center justify-center relative">
       <svg
         viewBox={`${-pad} ${-pad} ${vb} ${vb}`}
         style={{ width: '100%', height: '100%', maxWidth: '100vmin', maxHeight: '100vmin' }}
@@ -276,6 +369,7 @@ export default function NewWays({ level = 2, onComplete }) {
           </div>
         </div>
       )}
+      </div>{/* end board area */}
     </div>
   )
 }
