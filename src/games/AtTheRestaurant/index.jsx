@@ -21,4 +21,6 @@ export const meta = {
   maxAge:   9,
   minLevel: 1,
   maxLevel: 5,
+  minScreenWidth: 320,
+  minScreenHeight: 480,
 }

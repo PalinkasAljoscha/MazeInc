@@ -9,6 +9,10 @@ import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
 import NumberLabyrinth, { meta as numberLabyrinthMeta } from './games/NumberLabyrinth'
 import AtTheRestaurant, { meta as atTheRestaurantMeta } from './games/AtTheRestaurant'
 
+// minScreenWidth / minScreenHeight — minimum CSS pixel dimensions for comfortable play.
+// Use `window.innerWidth >= g.minScreenWidth && window.innerHeight >= g.minScreenHeight`
+// to filter games for the current device. Equal values (e.g. 400×400) indicate a square
+// game that needs roughly as much vertical as horizontal space.
 const GAMES = [
   {
     id: 'multiples-catcher',
@@ -22,6 +26,8 @@ const GAMES = [
     minLevel: multiplesCatcherMeta.minLevel,
     maxLevel: multiplesCatcherMeta.maxLevel,
     hasSpeed: true,
+    minScreenWidth: multiplesCatcherMeta.minScreenWidth,
+    minScreenHeight: multiplesCatcherMeta.minScreenHeight,
   },
   {
     id: 'new-ways',
@@ -34,6 +40,8 @@ const GAMES = [
     shadow: 'shadow-teal-300',
     minLevel: newWaysMeta.minLevel,
     maxLevel: newWaysMeta.maxLevel,
+    minScreenWidth: newWaysMeta.minScreenWidth,
+    minScreenHeight: newWaysMeta.minScreenHeight,
   },
   {
     id: 'balance',
@@ -47,6 +55,8 @@ const GAMES = [
     minLevel: balanceMeta.minLevel,
     maxLevel: balanceMeta.maxLevel,
     hasSpeed: true,
+    minScreenWidth: balanceMeta.minScreenWidth,
+    minScreenHeight: balanceMeta.minScreenHeight,
   },
   {
     id: 'feed-the-numbers',
@@ -60,6 +70,8 @@ const GAMES = [
     minLevel: feedTheNumbersMeta.minLevel,
     maxLevel: feedTheNumbersMeta.maxLevel,
     hasSpeed: true,
+    minScreenWidth: feedTheNumbersMeta.minScreenWidth,
+    minScreenHeight: feedTheNumbersMeta.minScreenHeight,
   },
   {
     id: 'ladder',
@@ -72,6 +84,8 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: ladderMeta.minLevel,
     maxLevel: ladderMeta.maxLevel,
+    minScreenWidth: ladderMeta.minScreenWidth,
+    minScreenHeight: ladderMeta.minScreenHeight,
   },
   {
     id: 'number-labyrinth',
@@ -84,6 +98,8 @@ const GAMES = [
     shadow: 'shadow-orange-300',
     minLevel: numberLabyrinthMeta.minLevel,
     maxLevel: numberLabyrinthMeta.maxLevel,
+    minScreenWidth: numberLabyrinthMeta.minScreenWidth,
+    minScreenHeight: numberLabyrinthMeta.minScreenHeight,
   },
   {
     id: 'at-the-restaurant',
@@ -96,6 +112,8 @@ const GAMES = [
     shadow: 'shadow-red-300',
     minLevel: atTheRestaurantMeta.minLevel,
     maxLevel: atTheRestaurantMeta.maxLevel,
+    minScreenWidth: atTheRestaurantMeta.minScreenWidth,
+    minScreenHeight: atTheRestaurantMeta.minScreenHeight,
   },
 ].filter(g => g.enabled)
 

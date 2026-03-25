@@ -382,4 +382,6 @@ export const meta = {
   maxAge: 99,
   minLevel: 2,
   maxLevel: 5,
+  minScreenWidth: 400,
+  minScreenHeight: 400,
 }
