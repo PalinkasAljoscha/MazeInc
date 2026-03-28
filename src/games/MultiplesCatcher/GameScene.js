@@ -52,7 +52,7 @@ export default class GameScene extends Phaser.Scene {
     this.slotValues = levelCfg.slotValues
     this.numSlots   = this.slotValues.length
     this.maxBall    = levelCfg.maxBall
-    this.minBall    = levelCfg.minBall
+    this.minBall    = Math.max(levelCfg.minBall, Math.max(...this.slotValues) + 1)
 
     this.score = 0
     this.isGameOver = false
@@ -270,7 +270,7 @@ export default class GameScene extends Phaser.Scene {
     this.ball = null
 
     if (correct) {
-      this.score++
+      this.score += slotValue
       this.scoreText.setText(i18n.t('multiplesCatcher.hud.score', { score: this.score }))
       this.showCorrect(landX, landY, ballValue, slotValue)
     } else {
