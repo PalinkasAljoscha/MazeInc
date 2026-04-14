@@ -14,10 +14,10 @@ import { GAME_W, GAME_H } from '../games/shared/phaserConstants.js'
  *
  * @param {React.RefObject<HTMLElement>} containerRef  ref on the canvas wrapper div
  * @param {typeof Phaser.Scene}          SceneClass    the GameScene class to run
- * @param {{ level, speed, onComplete }} options
+ * @param {{ level, speed, demo, onComplete }} options
  * @returns {React.RefObject<Phaser.Scene>} sceneRef   set after 'sceneReady' fires
  */
-export function usePhaserGame(containerRef, SceneClass, { level, speed, onComplete }) {
+export function usePhaserGame(containerRef, SceneClass, { level, speed, demo = false, onComplete }) {
   const sceneRef = useRef(null)
 
   useEffect(() => {
@@ -36,6 +36,7 @@ export function usePhaserGame(containerRef, SceneClass, { level, speed, onComple
 
     game.registry.set('level', level)
     game.registry.set('speed', speed)
+    game.registry.set('demo', demo)
 
     game.events.on('sceneReady', (scene) => {
       sceneRef.current = scene

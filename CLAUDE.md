@@ -125,13 +125,19 @@ const playableGames = GAMES.filter(g => screenW >= g.minScreenWidth && screenH >
 
 The Phaser internal canvas (480×680) scales via FIT mode and does not change — `minScreenWidth`/`minScreenHeight` describe the *host device*, not the canvas. For React/SVG games the values directly bound the usable drawing area.
 
-**Home page tiles** — each game card is a compact horizontal strip: emoji top-left, `▶` play button top-right, game title + description (up to 3 lines) spanning full width below. No level/speed controls on the tile. Clicking `▶` starts the game immediately at `meta.defaultLevel` / `meta.defaultSpeed` — no popup. To change level/speed, the player uses the **Change** button inside the game.
+**Home page tiles** — each game card is a compact horizontal strip: emoji top-left, `▶` play button top-right, game title + description (up to 3 lines) spanning full width below. No level/speed controls on the tile. Clicking `▶` launches demo mode immediately (no popup) — see **Demo mode** below.
 
-**Settings popup** — opened only from within a game via the `Change` button (no longer shown on the home page). Shows "Choose Difficulty" title, a `‹ N ›` picker for Level (always), and a second picker for Speed if `hasSpeed`. When both pickers are shown they stack vertically at ~65% size; a single picker is shown at full size. Buttons: **OK** (starts a fresh game instance); **Cancel** (closes popup, game continues unchanged). Level and speed are never changed on a running game — OK always starts a new instance.
+**Demo mode** — every game starts in demo mode when launched from the home page. The game runs automated/scripted play at `meta.defaultLevel` / `meta.defaultSpeed` until the player takes action. The React header shows the default level/speed and the **Change** button — identical to real-play mode (no special badge). The game canvas shows a 🦉 owl emoji centred in the upper half of the play area; the owl drifts slowly left and right in a random-walk style (chained `Sine.easeInOut` tweens, ~40 px/s, range ±W/6 of centre). No timer runs and no score is tracked. Two exit paths:
+- **Start New** → immediately starts real play at `meta.defaultLevel` / `meta.defaultSpeed` (no popup)
+- **Change** → opens the Settings popup; **OK** starts real play at the chosen level/speed; **Cancel** returns to the demo
+
+Every game component must accept a `demo` boolean prop (default `false`). Phaser games push it to the registry (`game.registry.set('demo', demo)`); the scene reads `this.isDemo = this.registry.get('demo') ?? false` in `create()`. React games use the prop directly. See `MultiplesCatcher` for the reference implementation.
+
+**Settings popup** — opened only via the **Change** button (available in both demo mode and real play). Shows "Choose Difficulty" title, a `‹ N ›` picker for Level (always), and a second picker for Speed if `hasSpeed`. When both pickers are shown they stack vertically at ~65% size; a single picker is shown at full size. Buttons: **OK** (starts a fresh real game instance at chosen level/speed); **Cancel** (closes popup, current state — demo or real — continues unchanged). Level and speed are never changed on a running game — OK always starts a new instance.
 
 **Game header bar** — three-column flex row:
-- **Left** — `← Home` button + three-line game info: app name (tiny/dimmed), `{emoji} {title}` (large/bold), `Level {n} · Speed {n}` (small/dimmed) + blue **Change** button inline
-- **Center** — `Start New` button (`palette.btnBlue`); restarts the game at the current level/speed without a popup
+- **Left** — `← Home` button + three-line game info: app name (tiny/dimmed), `{emoji} {title}` (large/bold), `Level {n} · Speed {n}` (small/dimmed) + blue **Change** button — identical layout in demo and real mode (`activeLevel`/`activeSpeed` already hold the defaults when in demo)
+- **Center** — `Start New` button (`palette.btnBlue`); in demo mode starts real play at defaults without a popup; in real mode restarts the game at the current level/speed
 - **Right** — empty `flex-1` spacer
 
 **Game-over popup (Time's up)** — all games with a timer must use the same popup layout:
@@ -146,8 +152,8 @@ The Phaser internal canvas (480×680) scales via FIT mode and does not change �
 
 **Adding a new game:**
 1. Create `src/games/MyGame/index.jsx` (React wrapper) and `GameScene.js` (Phaser scene with `LEVELS` config)
-2. Export `default` component and `meta` (including `minLevel`/`maxLevel`, `defaultLevel`, `defaultSpeed`, `minScreenWidth`, `minScreenHeight`) from `index.jsx`; accept `speed = 4` prop and push to registry if the game uses it
-3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx`
+2. Export `default` component and `meta` (including `minLevel`/`maxLevel`, `defaultLevel`, `defaultSpeed`, `minScreenWidth`, `minScreenHeight`) from `index.jsx`; accept `speed = 4` and `demo = false` props and push both to registry if the game uses Phaser
+3. If the game needs on-screen touch controls, import `TouchButton` from `../../components/TouchButton.jsx` and hide the touch controls when `demo` is true
 4. Import component and meta into `App.jsx`; add a single entry to `GAMES` with `component`, `emoji`, `color`, `shadow`, `minLevel`, `maxLevel`, `defaultLevel`, `defaultSpeed`, `minScreenWidth`, `minScreenHeight`, and `hasSpeed` if applicable — source all fields from meta
 5. Add `games.myGame.title` / `.description` and all in-game strings under `myGame.*` to `en.json` and `fr.json`
 6. Create asset folders: `src/games/MyGame/assets/` (React-side) and `public/games/<meta.id>/` (Phaser-side), each with a `.gitkeep` if empty

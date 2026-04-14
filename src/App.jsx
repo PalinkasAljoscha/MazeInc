@@ -301,20 +301,35 @@ function HomePage({ onSelectGame }) {
 export default function App() {
   const { t } = useTranslation()
 
-  // Active game state — only ever mutated together via startGame()
+  // Active game state — only ever mutated together via startGame() / startDemo()
   const [activeGame, setActiveGame]   = useState(null)
   const [activeLevel, setActiveLevel] = useState(null)
   const [activeSpeed, setActiveSpeed] = useState(4)
+  const [isDemoMode, setIsDemoMode]   = useState(false)
   const [gameKey, setGameKey]         = useState(0)
 
-  // Settings modal: null | { gameConfig, fromGame, pendingLevel, pendingSpeed }
+  // Settings modal: null | { gameConfig, pendingLevel, pendingSpeed }
   const [settingsModal, setSettingsModal] = useState(null)
 
-  // Always start a completely fresh game instance — never mutate a running game
+  // Start a real game session (clears demo mode).
+  // Always mounts a completely fresh game instance — level/speed changes use key prop.
   function startGame(gameConfig, level, speed) {
     setActiveGame(gameConfig.id)
     setActiveLevel(level)
     setActiveSpeed(speed)
+    setIsDemoMode(false)
+    setGameKey((k) => k + 1)
+    setSettingsModal(null)
+  }
+
+  // Launch a game immediately in demo mode (called from the home page ▶ button).
+  // No settings popup — the demo always runs at defaultLevel / defaultSpeed.
+  // The player switches to real play by pressing "Start New" inside the game.
+  function startDemo(gameConfig) {
+    setActiveGame(gameConfig.id)
+    setActiveLevel(gameConfig.defaultLevel)
+    setActiveSpeed(gameConfig.defaultSpeed)
+    setIsDemoMode(true)
     setGameKey((k) => k + 1)
     setSettingsModal(null)
   }
@@ -362,6 +377,9 @@ export default function App() {
               <h1 className="text-white font-black text-xl leading-tight">
                 {game.emoji} {t(game.titleKey)}
               </h1>
+              {/* Level/speed + Change button — shown identically in demo and real mode.
+                  In demo mode activeLevel/activeSpeed already hold the defaults
+                  (set by startDemo), so no special-casing is needed here. */}
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-white/50 text-xs font-semibold">
                   {t('levels.label')} {activeLevel}
@@ -380,10 +398,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* Center: Start New */}
+          {/* Center: Start New.
+              In demo mode → starts real play immediately at defaultLevel/defaultSpeed (no popup).
+                             Use the Change button to pick a different level/speed first.
+              In real mode → remounts the game at the current level/speed (same as before). */}
           <div className="flex justify-center flex-1">
             <button
-              onClick={() => startGame(game, activeLevel, activeSpeed)}
+              onClick={() => isDemoMode
+                ? startGame(game, game.defaultLevel, game.defaultSpeed)
+                : startGame(game, activeLevel, activeSpeed)
+              }
               className="text-white font-black text-xl rounded-2xl px-6 py-2 active:scale-95 transition-transform duration-100"
               style={{ backgroundColor: palette.btnBlue }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
@@ -403,6 +427,7 @@ export default function App() {
             key={gameKey}
             level={activeLevel}
             speed={activeSpeed}
+            demo={isDemoMode}
             onComplete={(result) => console.log('Game complete', result)}
           />
         </div>
@@ -423,6 +448,6 @@ export default function App() {
 
   // ── Home view ──────────────────────────────────────────────────────────────
   return (
-    <HomePage onSelectGame={(gameConfig) => startGame(gameConfig, gameConfig.defaultLevel, gameConfig.defaultSpeed)} />
+    <HomePage onSelectGame={startDemo} />
   )
 }

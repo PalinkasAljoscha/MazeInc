@@ -21,7 +21,8 @@
     "change": "Change",
     "chooseDifficulty": "Choose Difficulty",
     "ok": "OK",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "demo": "DEMO"
   },
   "games": {
     "multiplesCatcher": {
