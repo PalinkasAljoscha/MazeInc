@@ -39,4 +39,6 @@ export const meta = {
   maxLevel: 4,
   minScreenWidth: 320,
   minScreenHeight: 480,
+  defaultLevel: 2,
+  defaultSpeed: 4,
 }

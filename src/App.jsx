@@ -25,6 +25,8 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: multiplesCatcherMeta.minLevel,
     maxLevel: multiplesCatcherMeta.maxLevel,
+    defaultLevel: multiplesCatcherMeta.defaultLevel,
+    defaultSpeed: multiplesCatcherMeta.defaultSpeed,
     hasSpeed: true,
     minScreenWidth: multiplesCatcherMeta.minScreenWidth,
     minScreenHeight: multiplesCatcherMeta.minScreenHeight,
@@ -40,6 +42,8 @@ const GAMES = [
     shadow: 'shadow-teal-300',
     minLevel: newWaysMeta.minLevel,
     maxLevel: newWaysMeta.maxLevel,
+    defaultLevel: newWaysMeta.defaultLevel,
+    defaultSpeed: newWaysMeta.defaultSpeed,
     minScreenWidth: newWaysMeta.minScreenWidth,
     minScreenHeight: newWaysMeta.minScreenHeight,
   },
@@ -54,6 +58,8 @@ const GAMES = [
     shadow: 'shadow-blue-300',
     minLevel: balanceMeta.minLevel,
     maxLevel: balanceMeta.maxLevel,
+    defaultLevel: balanceMeta.defaultLevel,
+    defaultSpeed: balanceMeta.defaultSpeed,
     hasSpeed: true,
     minScreenWidth: balanceMeta.minScreenWidth,
     minScreenHeight: balanceMeta.minScreenHeight,
@@ -69,6 +75,8 @@ const GAMES = [
     shadow: 'shadow-pink-300',
     minLevel: feedTheNumbersMeta.minLevel,
     maxLevel: feedTheNumbersMeta.maxLevel,
+    defaultLevel: feedTheNumbersMeta.defaultLevel,
+    defaultSpeed: feedTheNumbersMeta.defaultSpeed,
     hasSpeed: true,
     minScreenWidth: feedTheNumbersMeta.minScreenWidth,
     minScreenHeight: feedTheNumbersMeta.minScreenHeight,
@@ -84,6 +92,8 @@ const GAMES = [
     shadow: 'shadow-indigo-300',
     minLevel: ladderMeta.minLevel,
     maxLevel: ladderMeta.maxLevel,
+    defaultLevel: ladderMeta.defaultLevel,
+    defaultSpeed: ladderMeta.defaultSpeed,
     minScreenWidth: ladderMeta.minScreenWidth,
     minScreenHeight: ladderMeta.minScreenHeight,
   },
@@ -98,6 +108,8 @@ const GAMES = [
     shadow: 'shadow-orange-300',
     minLevel: numberLabyrinthMeta.minLevel,
     maxLevel: numberLabyrinthMeta.maxLevel,
+    defaultLevel: numberLabyrinthMeta.defaultLevel,
+    defaultSpeed: numberLabyrinthMeta.defaultSpeed,
     minScreenWidth: numberLabyrinthMeta.minScreenWidth,
     minScreenHeight: numberLabyrinthMeta.minScreenHeight,
   },
@@ -112,6 +124,8 @@ const GAMES = [
     shadow: 'shadow-red-300',
     minLevel: atTheRestaurantMeta.minLevel,
     maxLevel: atTheRestaurantMeta.maxLevel,
+    defaultLevel: atTheRestaurantMeta.defaultLevel,
+    defaultSpeed: atTheRestaurantMeta.defaultSpeed,
     minScreenWidth: atTheRestaurantMeta.minScreenWidth,
     minScreenHeight: atTheRestaurantMeta.minScreenHeight,
   },
@@ -325,15 +339,6 @@ export default function App() {
     setSettingsModal(null)
   }
 
-  function openSettingsFromHome(gameConfig) {
-    setSettingsModal({
-      gameConfig,
-      fromGame: false,
-      pendingLevel: gameConfig.minLevel,
-      pendingSpeed: 4,
-    })
-  }
-
   function openSettingsFromGame() {
     setSettingsModal({
       gameConfig: activeGameConfig,
@@ -439,17 +444,6 @@ export default function App() {
 
   // ── Home view ──────────────────────────────────────────────────────────────
   return (
-    <>
-      <HomePage onSelectGame={openSettingsFromHome} />
-      {settingsModal && (
-        <SettingsModal
-          modal={settingsModal}
-          onUpdate={handleSettingsUpdate}
-          onOK={handleSettingsOK}
-          onCancel={handleSettingsCancel}
-          t={t}
-        />
-      )}
-    </>
+    <HomePage onSelectGame={(gameConfig) => startGame(gameConfig, gameConfig.defaultLevel, gameConfig.defaultSpeed)} />
   )
 }
