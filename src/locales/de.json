@@ -32,10 +32,6 @@
       "title": "Neue Wege",
       "description": "Navigiere von Ecke zu Ecke — aber wiederhole niemals eine Zugfolge!"
     },
-    "feedTheNumbers": {
-      "title": "Füttere die Zahlen",
-      "description": "Schieße Bälle auf die hungrigen Zahlen! Sammle Bonuspunkte, wenn gleiche Ziffern erscheinen."
-    },
     "balance": {
       "title": "Gleichgewicht",
       "description": "Stapele nummerierte Würfel. Halte links = rechts im Gleichgewicht, oder baue eine aufsteigende Folge!"
@@ -113,24 +109,6 @@
     "feedback": {
       "balanced": "⚖️ Ausgeglichen!",
       "ascending": "📈 Aufsteigend!"
-    },
-    "gameOver": {
-      "title": "Zeit abgelaufen! 🎉",
-      "scoreLabel": "Deine Punkte:",
-      "playAgain": "Nochmal spielen"
-    }
-  },
-  "feedTheNumbers": {
-    "hud": {
-      "score": "Punkte: {{score}}",
-      "hint": "— schieße einen Ball zu einer hungrigen Zahl —"
-    },
-    "controls": {
-      "send": "↑ Senden"
-    },
-    "feedback": {
-      "doubleDigit": "+2 Zwillingsziffern!",
-      "tripleDigit": "+6 Drillinge! ✨"
     },
     "gameOver": {
       "title": "Zeit abgelaufen! 🎉",

@@ -32,20 +32,6 @@ Each entry covers context that cannot be inferred from the code alone: the desig
 
 ---
 
-## Feed the Numbers 🍽️
-
-**Idea:** Quickly find numbers which added together result in a number with repeated digits. It requires a familiarity with addition and digits without explicitly solving addition problems.
-
-**Math concepts:** Addition, decimal system
-
-**Skill prerequisite:** familiarity with addition in larger number above 100.
-
-**Mood:** fast reaction, laid back, since you can just try things, there are no errors.
-
-**Description:** Numbers pass by and you need to spot quickly if added to another number this will result in a number with repeating digits. Hence you need some quick familiarity in addition of numbers above 100 without necessarily finding exact solutions quickly. The game is forgiving as you cannot really make errors or lose the game. 
-
----
-
 ## New Ways 🗺️
 
 **Idea:** The player navigates from the bottom-left corner to the top-right corner of a square grid using directional controls. The twist: the game tracks the full sequence of moves (e.g. RRUURULR…) and rejects any move that would make the sequence contain a repeated block — that is, any sub-sequence of the form XX where the same string appears twice in a row. The player must reach the goal via a path whose move-sequence is square-free. Because the grid allows four move directions, such paths are plentiful, and the puzzle becomes: can you find one that leads all the way to the goal?

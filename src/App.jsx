@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { palette } from './theme.js'
 import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
 import NewWays, { meta as newWaysMeta } from './games/NewWays'
-import FeedTheNumbers, { meta as feedTheNumbersMeta } from './games/FeedTheNumbers'
 import Balance, { meta as balanceMeta } from './games/Balance'
 import LadderToInfinity, { meta as ladderMeta } from './games/LadderToInfinity'
 import NumberLabyrinth, { meta as numberLabyrinthMeta } from './games/NumberLabyrinth'
@@ -63,23 +62,6 @@ const GAMES = [
     hasSpeed: true,
     minScreenWidth: balanceMeta.minScreenWidth,
     minScreenHeight: balanceMeta.minScreenHeight,
-  },
-  {
-    id: 'feed-the-numbers',
-    enabled: false,
-    component: FeedTheNumbers,
-    titleKey: 'games.feedTheNumbers.title',
-    descKey: 'games.feedTheNumbers.description',
-    emoji: '🍽️',
-    color: 'from-rose-500 to-pink-600',
-    shadow: 'shadow-pink-300',
-    minLevel: feedTheNumbersMeta.minLevel,
-    maxLevel: feedTheNumbersMeta.maxLevel,
-    defaultLevel: feedTheNumbersMeta.defaultLevel,
-    defaultSpeed: feedTheNumbersMeta.defaultSpeed,
-    hasSpeed: true,
-    minScreenWidth: feedTheNumbersMeta.minScreenWidth,
-    minScreenHeight: feedTheNumbersMeta.minScreenHeight,
   },
   {
     id: 'ladder',
@@ -187,9 +169,9 @@ function Picker({ label, value, min, max, onChange, small = false }) {
 }
 
 // ── Settings modal (level + speed selection) ───────────────────────────────────
-// settingsModal shape: { gameConfig, fromGame, pendingLevel, pendingSpeed }
+// settingsModal shape: { gameConfig, pendingLevel, pendingSpeed }
 function SettingsModal({ modal, onUpdate, onOK, onCancel, t }) {
-  const { gameConfig, fromGame, pendingLevel, pendingSpeed } = modal
+  const { gameConfig, pendingLevel, pendingSpeed } = modal
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/65 z-50">
       <div className="bg-gray-800 border border-gray-600 rounded-3xl px-8 py-7 shadow-2xl flex flex-col items-center gap-6 mx-4 w-full max-w-xs">
@@ -222,14 +204,12 @@ function SettingsModal({ modal, onUpdate, onOK, onCancel, t }) {
 
         {/* Buttons */}
         <div className="flex gap-3 w-full">
-          {fromGame && (
-            <button
-              onClick={onCancel}
-              className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-black text-lg rounded-xl py-2.5 transition-colors active:scale-95"
-            >
-              {t('home.cancel')}
-            </button>
-          )}
+          <button
+            onClick={onCancel}
+            className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-black text-lg rounded-xl py-2.5 transition-colors active:scale-95"
+          >
+            {t('home.cancel')}
+          </button>
           <button
             onClick={onOK}
             className="flex-1 text-white font-black text-lg rounded-xl py-2.5 transition-colors active:scale-95"
@@ -342,7 +322,6 @@ export default function App() {
   function openSettingsFromGame() {
     setSettingsModal({
       gameConfig: activeGameConfig,
-      fromGame: true,
       pendingLevel: activeLevel,
       pendingSpeed: activeSpeed,
     })

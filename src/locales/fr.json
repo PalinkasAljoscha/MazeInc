@@ -32,10 +32,6 @@
       "title": "Nouveaux Chemins",
       "description": "Va d'un coin à l'autre — mais ne répète jamais une séquence de mouvements !"
     },
-    "feedTheNumbers": {
-      "title": "Nourris les Nombres",
-      "description": "Envoie des balles aux nombres affamés ! Marque des points bonus quand les mêmes chiffres apparaissent."
-    },
     "balance": {
       "title": "Équilibre",
       "description": "Empile des cubes numérotés. Équilibre gauche = droite, ou construis une séquence croissante pour vider le terrain !"
@@ -114,24 +110,6 @@
     "feedback": {
       "balanced": "⚖️ Équilibré !",
       "ascending": "📈 Croissant !"
-    },
-    "gameOver": {
-      "title": "Temps écoulé ! 🎉",
-      "scoreLabel": "Ton score :",
-      "playAgain": "Rejouer"
-    }
-  },
-  "feedTheNumbers": {
-    "hud": {
-      "score": "Score : {{score}}",
-      "hint": "— envoie une balle nourrir un nombre affamé —"
-    },
-    "controls": {
-      "send": "↑ Envoyer"
-    },
-    "feedback": {
-      "doubleDigit": "+2 chiffres jumeaux !",
-      "tripleDigit": "+6 triplés ! ✨"
     },
     "gameOver": {
       "title": "Temps écoulé ! 🎉",

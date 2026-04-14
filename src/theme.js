@@ -56,12 +56,6 @@ export const palette = {
   leftHalfBg:     '#1c1c38',   // left side slightly blue-purple
   rightHalfBg:    '#1c2838',   // right side slightly teal-dark
 
-  // ── Feed the Numbers game ──
-  hungryBorder:   '#c39bd3',   // light purple border for hungry ellipses
-  pipeBlue:       '#4a90d9',   // pipe tube color
-  btnAmber:       '#f59e0b',   // amber — Send button fill
-  btnAmberHover:  '#d97706',   // amber darker — Send button hover
-
   // ── Coins (At the Restaurant) ──
   coinSilver:     '#b0bfd0',   // silver coin fill
   coinBorder:     '#7890a8',   // coin border ring
@@ -91,10 +85,6 @@ export const phaser = {
   btnBlue:       toHex(palette.btnBlue),
   btnBlueHover:  toHex(palette.btnBlueHover),
   overlayBlack:  toHex(palette.overlayBlack),
-  hungryBorder:  toHex(palette.hungryBorder),
-  pipeBlue:      toHex(palette.pipeBlue),
-  btnAmber:      toHex(palette.btnAmber),
-  btnAmberHover: toHex(palette.btnAmberHover),
   coinSilver:    toHex(palette.coinSilver),
   coinBorder:    toHex(palette.coinBorder),
 }

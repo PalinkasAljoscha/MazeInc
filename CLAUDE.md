@@ -51,7 +51,6 @@ public/
     multiples-catcher/             # Phaser-loaded assets for this game (images, spritesheets, audio)
     at-the-restaurant/
     balance/
-    feed-the-numbers/
     ladder/
     new-ways/
     number-labyrinth/

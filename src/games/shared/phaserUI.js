@@ -13,8 +13,8 @@ import i18n from '../../i18n.js'
  *   button bg   btnOff     = +90   (220×56 rect, radius 16)
  *   button text btnTextOff = +118
  *
- * For games with an extra line (e.g. FeedTheNumbers "hungry numbers"),
- * pass the extended layout overrides and add the line via `extraLines`:
+ * For games with an extra line, pass the extended layout overrides
+ * and add the line via `extraLines`:
  *   { panelH:310, panelTopOff:155, titleOff:-110, labelOff:-48,
  *     scoreOff:14, btnOff:107, btnTextOff:135,
  *     extraLines:[{ yOff:82, text:'…' }] }
@@ -81,7 +81,7 @@ export function buildGameOverPanel(scene, opts) {
     fontSize: '72px', fontFamily: 'Arial Black, Arial', color: palette.correctGreen,
   }).setOrigin(0.5)
 
-  // Optional extra lines (e.g. FeedTheNumbers final hungry-number display)
+  // Optional extra lines
   for (const { yOff, text, fontSize = '22px', color = palette.silverGray } of extraLines) {
     scene.add.text(cx, cy + yOff, text, {
       fontSize, fontFamily: 'Arial Black, Arial', color,

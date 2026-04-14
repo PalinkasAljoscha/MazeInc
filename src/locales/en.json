@@ -32,10 +32,6 @@
       "title": "New Ways",
       "description": "Navigate from corner to corner — but never repeat a sequence of moves!"
     },
-    "feedTheNumbers": {
-      "title": "Feed the Numbers",
-      "description": "Shoot balls into the hungry numbers! Score bonus points when matching digits appear."
-    },
     "balance": {
       "title": "Balance",
       "description": "Stack numbered cubes. Balance left = right, or build an ascending sequence to clear the field!"
@@ -114,24 +110,6 @@
     "feedback": {
       "balanced": "⚖️ Balanced!",
       "ascending": "📈 Ascending!"
-    },
-    "gameOver": {
-      "title": "Time's up! 🎉",
-      "scoreLabel": "Your score:",
-      "playAgain": "Play Again"
-    }
-  },
-  "feedTheNumbers": {
-    "hud": {
-      "score": "Score: {{score}}",
-      "hint": "— send a ball to feed a hungry number —"
-    },
-    "controls": {
-      "send": "↑ Send"
-    },
-    "feedback": {
-      "doubleDigit": "+2 twin digits!",
-      "tripleDigit": "+6 triple digits! ✨"
     },
     "gameOver": {
       "title": "Time's up! 🎉",
