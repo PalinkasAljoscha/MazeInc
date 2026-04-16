@@ -27,6 +27,7 @@ const GAMES = [
     defaultLevel: multiplesCatcherMeta.defaultLevel,
     defaultSpeed: multiplesCatcherMeta.defaultSpeed,
     hasSpeed: true,
+    hasDemo: true,
     minScreenWidth: multiplesCatcherMeta.minScreenWidth,
     minScreenHeight: multiplesCatcherMeta.minScreenHeight,
   },
@@ -108,6 +109,7 @@ const GAMES = [
     maxLevel: atTheRestaurantMeta.maxLevel,
     defaultLevel: atTheRestaurantMeta.defaultLevel,
     defaultSpeed: atTheRestaurantMeta.defaultSpeed,
+    hasDemo: true,
     minScreenWidth: atTheRestaurantMeta.minScreenWidth,
     minScreenHeight: atTheRestaurantMeta.minScreenHeight,
   },
@@ -330,14 +332,13 @@ export default function App() {
     setSettingsModal(null)
   }
 
-  // Launch a game immediately in demo mode (called from the home page ▶ button).
-  // No settings popup — the demo always runs at defaultLevel / defaultSpeed.
-  // The player switches to real play by pressing "Start New" inside the game.
+  // Launch a game from the home page ▶ button.
+  // Games with hasDemo:true start in demo mode; all others start as a regular game.
   function startDemo(gameConfig) {
     setActiveGame(gameConfig.id)
     setActiveLevel(gameConfig.defaultLevel)
     setActiveSpeed(gameConfig.defaultSpeed)
-    setIsDemoMode(true)
+    setIsDemoMode(gameConfig.hasDemo === true)
     setGameKey((k) => k + 1)
     setSettingsModal(null)
   }
