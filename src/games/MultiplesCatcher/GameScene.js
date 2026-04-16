@@ -356,6 +356,7 @@ export default class GameScene extends Phaser.Scene {
     if (correct) {
       this.score += slotValue
       this.scoreText.setText(i18n.t('multiplesCatcher.hud.score', { score: this.score }))
+      this.showScorePopup(slotValue)
       this.showCorrect(landX, landY, ballValue, slotValue)
     } else {
       this.showWrong(landX, landY, ballValue, slotValue)
@@ -363,6 +364,40 @@ export default class GameScene extends Phaser.Scene {
 
     // Next ball after short pause
     this.time.delayedCall(600, this.spawnBall, [], this)
+  }
+
+  // ── score popup in header ─────────────────────────────────────────────────
+  showScorePopup(points) {
+    // Kill any previous popup still fading
+    if (this._scorePopup) { this._scorePopup.destroy(); this._scorePopup = null }
+
+    const label = `+${points}`
+    const W = GAME_W
+    const PAD_X = 14, PAD_Y = 6
+    const FONT_SIZE = 22
+
+    const txt = this.add.text(0, 0, label, {
+      fontSize: `${FONT_SIZE}px`,
+      fontFamily: 'Arial Black, Arial',
+      color: palette.gameHeader,
+    }).setOrigin(0.5)
+
+    const bw = txt.width  + PAD_X * 2
+    const bh = txt.height + PAD_Y * 2
+    const bg = this.add.graphics()
+    bg.fillStyle(C.scoreYellow, 1)
+    bg.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, 8)
+
+    const container = this.add.container(W / 2, HEADER_H / 2, [bg, txt]).setDepth(20)
+    this._scorePopup = container
+
+    this.tweens.add({
+      targets: container,
+      alpha: 0,
+      duration: 1500,
+      ease: 'Quad.easeIn',
+      onComplete: () => { container.destroy(); if (this._scorePopup === container) this._scorePopup = null },
+    })
   }
 
   // ── feedback effects ──────────────────────────────────────────────────────
