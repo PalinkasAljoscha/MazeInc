@@ -119,6 +119,13 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.isDemo) {
       this.timerText.setText('')
+      // Create persistent owl at MENU position — visible immediately when game loads
+      const mt = this.menuTitleText
+      this._demoOwl = this.add.text(
+        mt.x - mt.width / 2 - 32,
+        mt.y + mt.height / 2,
+        '🦉', { fontSize: '58px' }
+      ).setOrigin(0.5).setDepth(20)
       this._demoAnnotate()
     } else {
       this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
@@ -173,7 +180,7 @@ export default class GameScene extends Phaser.Scene {
     const colW = W / COLS
     const rowH = (MENU_H - 28) / ROWS   // ~86 px per row
 
-    this.add.text(W / 2, MENU_TOP + 6, i18n.t('atRestaurant.menu.title'), {
+    this.menuTitleText = this.add.text(W / 2, MENU_TOP + 6, i18n.t('atRestaurant.menu.title'), {
       fontSize: '14px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
     }).setOrigin(0.5, 0)
 
@@ -465,43 +472,62 @@ export default class GameScene extends Phaser.Scene {
 
   // Runs one demo cycle: price labels → sum formula → coin selection → feedback.
   // Called from create() for the first round and from _nextRound() for all subsequent ones.
+  // The owl (_demoOwl) is persistent — it is never destroyed, only moved.
   _demoAnnotate() {
     if (this.isGameOver) return
 
     const foods  = this.foodEmojiObjects
     const items  = this.foodItemOrder
     const labels = []
-    const PRICE_INTERVAL = 750   // ms between each price label appearing
+    const owl    = this._demoOwl
 
-    // Step 1 — price labels appear one by one above each food emoji
+    const OWL_TO_MENU    = 500   // ms to tween owl back to MENU
+    const MENU_WAIT      = 1000  // ms owl sits at MENU before visiting foods
+    const PRICE_INTERVAL = 800   // ms between each price label
+    const OWL_Y_OFFSET   = 90    // px above food emoji the owl hovers
+
+    // Return owl to MENU (on the first call it starts there, so this is a no-op visually)
+    const mt       = this.menuTitleText
+    const owlMenuX = mt.x - mt.width / 2 - 32
+    const owlMenuY = mt.y + mt.height / 2
+    this.tweens.add({
+      targets: owl, x: owlMenuX, y: owlMenuY,
+      duration: OWL_TO_MENU, ease: 'Sine.easeInOut',
+    })
+
+    // Step 1 — after reaching MENU and sitting for MENU_WAIT, owl visits each food
+    const foodStart = OWL_TO_MENU + MENU_WAIT
     foods.forEach((em, i) => {
-      this.time.delayedCall(i * PRICE_INTERVAL, () => {
+      this.time.delayedCall(foodStart + i * PRICE_INTERVAL, () => {
         if (this.isGameOver || !em.active) return
+
+        this.tweens.add({
+          targets: owl, x: em.x, y: em.y - OWL_Y_OFFSET,
+          duration: 350, ease: 'Sine.easeInOut',
+        })
+
         const label = this.add.text(em.x, em.y - 44, String(items[i].price), {
           fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
         }).setOrigin(0.5).setDepth(15).setAlpha(0)
-
         labels.push(label)
-        this.tweens.add({ targets: label, alpha: 1, y: em.y - 50, duration: 300, ease: 'Back.easeOut' })
+        this.tweens.add({ targets: label, alpha: 1, y: em.y - 52, duration: 300, ease: 'Back.easeOut' })
       })
     })
 
-    // Step 2 — sum formula appears after all price labels are visible
-    const formulaDelay = foods.length * PRICE_INTERVAL + 400
+    // Step 2 — sum formula appears; owl moves to its right
+    const formulaDelay = foodStart + foods.length * PRICE_INTERVAL + 350
     this.time.delayedCall(formulaDelay, () => {
       if (this.isGameOver) return
 
       const formula = items.map(f => f.price).join(' + ') + ' = ' + this.correctTotal
       const cx = this.W / 2
+      const pad = 16
 
-      // Semi-transparent pill behind the formula for readability
       const bg = this.add.graphics().setDepth(14)
       const formulaText = this.add.text(cx, TABLE_IMG_CY, formula, {
         fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
       }).setOrigin(0.5).setDepth(15).setAlpha(0)
 
-      // Draw pill once text dimensions are known
-      const pad = 16
       bg.fillStyle(0x000000, 0.55)
       bg.fillRoundedRect(
         cx - formulaText.width / 2 - pad,
@@ -510,26 +536,40 @@ export default class GameScene extends Phaser.Scene {
         formulaText.height + pad,
         10,
       )
-
       this.tweens.add({ targets: formulaText, alpha: 1, duration: 300, ease: 'Quad.easeOut' })
 
-      // Step 3 — select the correct coin after formula has been visible for 1.6 s
+      this.tweens.add({
+        targets: owl,
+        x: cx + formulaText.width / 2 + pad + 30,
+        y: TABLE_IMG_CY,
+        duration: 400, ease: 'Sine.easeInOut',
+      })
+
+      // Step 3 — owl flies to the correct coin and stays there through feedback
       this.time.delayedCall(1600, () => {
         if (this.isGameOver) return
 
-        // Clean up annotation layer
         labels.forEach(l => { if (l.active) l.destroy() })
         bg.destroy()
         formulaText.destroy()
 
-        // Highlight the correct coin
-        this.selectedNum = this.correctTotal
-        this._renderCoins()
+        const coinObj = this.coinObjects.find(c => c.num === this.correctTotal)
+        const coinX   = coinObj ? coinObj.x : this.W / 2
+        const coinY   = coinObj ? coinObj.y - COIN_R - 18 : TABLE_IMG_CY
 
-        // Step 4 — submit after a short pause so the selection is visible
-        this.time.delayedCall(500, () => {
-          if (this.isGameOver) return
-          this._submitAnswer()
+        this.tweens.add({
+          targets: owl, x: coinX, y: coinY,
+          duration: 500, ease: 'Sine.easeInOut',
+          onComplete: () => {
+            if (this.isGameOver) return
+            this.selectedNum = this.correctTotal
+            this._renderCoins()
+            // Owl stays at coin — next _demoAnnotate call will return it to MENU
+            this.time.delayedCall(400, () => {
+              if (this.isGameOver) return
+              this._submitAnswer()
+            })
+          },
         })
       })
     })
