@@ -56,6 +56,10 @@ export const palette = {
   leftHalfBg:     '#1c1c38',   // left side slightly blue-purple
   rightHalfBg:    '#1c2838',   // right side slightly teal-dark
 
+  // ── Tile accent colors (match home page game card gradients) ──
+  tilePurple: '#a855f7',   // purple-500 — MultiplesCatcher card start
+  tileIndigo: '#4f46e5',   // indigo-600 — MultiplesCatcher card end
+
   // ── Coins (At the Restaurant) ──
   coinSilver:     '#b0bfd0',   // silver coin fill
   coinBorder:     '#7890a8',   // coin border ring
@@ -87,4 +91,6 @@ export const phaser = {
   overlayBlack:  toHex(palette.overlayBlack),
   coinSilver:    toHex(palette.coinSilver),
   coinBorder:    toHex(palette.coinBorder),
+  tilePurple:    toHex(palette.tilePurple),
+  tileIndigo:    toHex(palette.tileIndigo),
 }

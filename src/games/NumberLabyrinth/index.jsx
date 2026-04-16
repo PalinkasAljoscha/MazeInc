@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from '../../theme.js'
 import { PathLayer } from '../shared/pathViz.jsx'
@@ -196,15 +196,10 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
   const [validated, setValidated]   = useState(false)
   const [invalidSteps, setInvalidSteps] = useState(new Set())
   const [won, setWon]               = useState(false)
-  const [elapsedSec, setElapsedSec] = useState(0)
-
-  const startRef = useRef(Date.now())
-
-  const atGoal = pos[0] === cols - 1 && pos[1] === rows - 1
 
   // ── Movement ─────────────────────────────────────────────────────────────
   // Moving in the opposite direction of the previous move undoes that move
-  // instead of adding a new step.
+  // instead of adding a new step. Stepping onto the goal triggers evaluation.
   const tryMove = useCallback((dir) => {
     if (validated) return
     const DELTAS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] }
@@ -221,9 +216,26 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
         return
       }
     }
+    const newHistory = [...history, [nc, nr]]
     setPos([nc, nr])
-    setHistory(h => [...h, [nc, nr]])
-  }, [pos, validated, cols, rows, history])
+    setHistory(newHistory)
+
+    // Auto-evaluate on reaching the goal
+    if (nc === cols - 1 && nr === rows - 1) {
+      const invalid = new Set()
+      for (let i = 0; i < newHistory.length - 1; i++) {
+        const [c1, r1] = newHistory[i]
+        const [c2, r2] = newHistory[i + 1]
+        if (grid[r2][c2] <= grid[r1][c1]) invalid.add(i)
+      }
+      setInvalidSteps(invalid)
+      setValidated(true)
+      if (invalid.size === 0) {
+        setWon(true)
+        onComplete?.({ correct: true, score: newHistory.length - 1 })
+      }
+    }
+  }, [pos, validated, cols, rows, history, grid, onComplete])
 
   // ── Keyboard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -246,25 +258,6 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     tryMove(dir)
   }, [pos, validated, tryMove])
 
-  // ── Done: validate path ───────────────────────────────────────────────────
-  const handleDone = useCallback(() => {
-    if (!atGoal || validated) return
-    const invalid = new Set()
-    for (let i = 0; i < history.length - 1; i++) {
-      const [c1, r1] = history[i]
-      const [c2, r2] = history[i + 1]
-      if (grid[r2][c2] <= grid[r1][c1]) invalid.add(i)
-    }
-    setInvalidSteps(invalid)
-    setValidated(true)
-    if (invalid.size === 0) {
-      const sec = Math.round((Date.now() - startRef.current) / 1000)
-      setElapsedSec(sec)
-      setWon(true)
-      onComplete?.({ correct: true, score: history.length - 1 })
-    }
-  }, [atGoal, validated, history, grid, onComplete])
-
   // ── Retry: reset path, keep same board ───────────────────────────────────
   const handleRetry = useCallback(() => {
     setPos([0, 0])
@@ -272,8 +265,6 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
     setValidated(false)
     setInvalidSteps(new Set())
     setWon(false)
-    setElapsedSec(0)
-    startRef.current = Date.now()
   }, [])
 
   // ── SVG helpers ──────────────────────────────────────────────────────────
@@ -307,37 +298,29 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
       className="w-full h-full flex flex-col items-center relative"
       style={{ background: palette.gameBg }}
     >
-      {/* ── Top bar: Done / Retry ── */}
-      <div className="flex items-center justify-center gap-4 py-2 shrink-0">
-        {!validated && (
-          <button
-            onClick={handleDone}
-            disabled={!atGoal}
-            className="px-8 py-2 rounded-xl font-black text-xl text-white"
-            style={{
-              background: palette.btnBlue,
-              opacity: atGoal ? 1 : 0.35,
-              cursor: atGoal ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {t('numberLabyrinth.done')}
-          </button>
-        )}
-        {validated && !won && (
-          <>
-            <span className="font-bold text-sm" style={{ color: palette.wrongRed }}>
-              {t('numberLabyrinth.invalid', { count: invalidSteps.size })}
+      {/* ── Top bar: result message after reaching the goal ── */}
+      {validated && (
+        <div className="flex items-center justify-center gap-4 py-2 shrink-0">
+          {won ? (
+            <span className="font-bold" style={{ color: palette.correctGreen, fontSize: '2.5em' }}>
+              {t('numberLabyrinth.wonTitle')}
             </span>
-            <button
-              onClick={handleRetry}
-              className="px-8 py-2 rounded-xl font-black text-xl text-white"
-              style={{ background: palette.btnBlue }}
-            >
-              {t('numberLabyrinth.retry')}
-            </button>
-          </>
-        )}
-      </div>
+          ) : (
+            <>
+              <span className="font-bold text-sm" style={{ color: palette.wrongRed }}>
+                {t('numberLabyrinth.invalid', { count: invalidSteps.size })}
+              </span>
+              <button
+                onClick={handleRetry}
+                className="px-8 py-2 rounded-xl font-black text-xl text-white"
+                style={{ background: palette.btnBlue }}
+              >
+                {t('numberLabyrinth.retry')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── Board SVG ── */}
       <div className="flex-1 min-h-0 w-full flex items-center justify-center px-2">
@@ -458,33 +441,6 @@ export default function NumberLabyrinth({ level = 1, onComplete }) {
         </svg>
       </div>
 
-{/* ── Win overlay ── */}
-      {won && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.72)' }}
-        >
-          <div
-            className="rounded-2xl text-center shadow-2xl"
-            style={{ background: palette.gameHeader, padding: '36px 52px', minWidth: 260 }}
-          >
-            <div className="text-4xl font-black mb-5" style={{ color: palette.scoreYellow }}>
-              {t('numberLabyrinth.wonTitle')}
-            </div>
-            <div className="text-lg mb-7" style={{ color: palette.silverGray }}>
-              {t('numberLabyrinth.timeLabel')}:{' '}
-              <span className="font-black" style={{ color: palette.white }}>{elapsedSec}s</span>
-            </div>
-            <button
-              onClick={handleRetry}
-              className="rounded-xl px-8 py-3 text-xl font-black text-white transition-opacity hover:opacity-80 active:scale-95"
-              style={{ background: palette.btnBlue }}
-            >
-              {t('numberLabyrinth.playAgain')}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

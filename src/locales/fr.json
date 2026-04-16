@@ -121,7 +121,7 @@
   "numberLabyrinth": {
     "done": "Terminé ✓",
     "retry": "Réessayer",
-    "invalid": "{{count}} mouvement(s) invalide(s) — réessaie !",
+    "invalid": "{{count}} mouvement(s) de grand vers petit — réessaie !",
     "wonTitle": "Résolu ! 🎉",
     "timeLabel": "Temps",
     "playAgain": "Rejouer"

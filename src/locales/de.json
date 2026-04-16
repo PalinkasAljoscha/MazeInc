@@ -120,7 +120,7 @@
   "numberLabyrinth": {
     "done": "Fertig ✓",
     "retry": "Nochmal versuchen",
-    "invalid": "{{count}} ungültiger Zug/ungültige Züge — versuch's nochmal!",
+    "invalid": "{{count}} Schritte von größer zu kleiner — versuch's nochmal!",
     "wonTitle": "Gelöst! 🎉",
     "timeLabel": "Zeit",
     "playAgain": "Nochmal spielen"

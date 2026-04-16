@@ -121,7 +121,7 @@
   "numberLabyrinth": {
     "done": "Done ✓",
     "retry": "Retry",
-    "invalid": "{{count}} invalid move(s) — try again!",
+    "invalid": "{{count}} moves from bigger to smaller number — try again!",
     "wonTitle": "Solved! 🎉",
     "timeLabel": "Time",
     "playAgain": "Play Again"

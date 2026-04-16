@@ -6,7 +6,7 @@ import { buildGameOverPanel, createCountdownTimer } from '../shared/phaserUI.js'
 
 // ── layout constants ──────────────────────────────────────────────────────────
 const HEADER_H = 55
-const CELL_SIZE = 52
+const CELL_SIZE = 60
 const GRID_COLS = 8
 const GRID_ROWS = 6
 const COLS_PER_SIDE = GRID_COLS / 2                                  // 4
@@ -308,7 +308,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Hint
     this.add.text(W / 2, HINT_Y, i18n.t('balance.hud.hint'), {
-      fontSize: '11px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
+      fontSize: '15px', fontFamily: 'Arial, sans-serif', color: palette.hintGray,
     }).setOrigin(0.5)
   }
 

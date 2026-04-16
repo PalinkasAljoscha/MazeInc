@@ -13,20 +13,10 @@ const GAME_DURATION = 60                   // seconds
 const BALLS_PER_SLOT = 2                   // multiples per slot in each bag cycle
 
 // ── feedback display config ────────────────────────────────────────────────
-// Base values are used during real play; DEMO_FEEDBACK_OVERRIDES are merged on
-// top when isDemo is true (see create()).  All mode-specific UI tweaks live here
-// rather than being scattered as ternaries through the rendering methods.
-// This mirrors the LEVELS pattern: one config object read once in create().
 const FEEDBACK_UI = {
-  fontSize:        '18px',
-  correctDuration: 800,   // ms the correct-equation label takes to fade out
-  wrongDuration:   700,   // ms the wrong-equation label takes to fade out
-}
-
-const DEMO_FEEDBACK_OVERRIDES = {
-  fontSize:        '32px',  // ≈180 % of base — easier to read as an illustration
-  correctDuration: 4000,    // ≈500 % of base — stays on screen long enough to study
-  wrongDuration:   3500,    // ≈500 % of base
+  fontSize:        '32px',
+  correctDuration: 4000,   // ms the equation label takes to fade out
+  wrongDuration:   3500,
 }
 
 // ── level config ───────────────────────────────────────────────────────────
@@ -64,11 +54,8 @@ export default class GameScene extends Phaser.Scene {
     // ── read registry values (level, speed, demo) ──
     const level = this.registry.get('level') ?? 2
     const speed = this.registry.get('speed') ?? 4
-    this.isDemo     = this.registry.get('demo')  ?? false
-    this.feedbackUI = this.isDemo
-      ? { ...FEEDBACK_UI, ...DEMO_FEEDBACK_OVERRIDES }
-      : FEEDBACK_UI
-    this.fallSpeed  = FALL_SPEED_BASE * SPEED_DIAL[speed]
+    this.isDemo    = this.registry.get('demo') ?? false
+    this.fallSpeed = FALL_SPEED_BASE * SPEED_DIAL[speed]
     const levelCfg = LEVELS[level] ?? LEVELS[2]
     this.slotValues = levelCfg.slotValues
     this.numSlots   = this.slotValues.length
@@ -85,23 +72,67 @@ export default class GameScene extends Phaser.Scene {
     // ── background ──
     this.add.rectangle(W / 2, H / 2, W, H, C.gameBg)
 
-    // ── demo mode: owl mascot ─────────────────────────────────────────────────
-    // Added right after the background (low z-order) so it stays behind all
-    // game elements (header bar, slots, falling ball).
-    // The owl sits in the centre of the upper half of the canvas and drifts
-    // slowly left/right in a random-walk style using chained tweens.
+    // ── demo mode: owl mascot + speech bubble ────────────────────────────────
+    // A Container holds the owl emoji and the speech bubble so they drift together.
+    // Positioned at the centre of the upper play area (below the header) so the
+    // bubble has enough vertical room between itself and the header bar.
     if (this.isDemo) {
-      this._demoOwl = this.add.text(W / 2, H / 4, '🦉', {
-        fontSize: '52px',
-      }).setOrigin(0.5).setDepth(10)  // above balls (depth 0) and all other elements
+      const owlY = HEADER_H + (H - HEADER_H) / 4   // ≈ 211 px for H=680, HEADER_H=55
 
-      // Each tween picks a new random x within ±W/6 of centre, moves there at
-      // a leisurely pace (~40 px/s), then immediately chains the next step.
+      this._demoOwl = this.add.container(W / 2, owlY).setDepth(10)
+
+      // ── speech bubble ──────────────────────────────────────────────────────
+      const BUBBLE_W   = Math.round(BALL_R * 2 * 3 * 1.4)  // 140% of 3 × ball diameter ≈ 269 px
+      const BUBBLE_PAD = 10
+      const TEXT_W     = BUBBLE_W - BUBBLE_PAD * 2
+
+      const msgText = this.add.text(0, 0,
+        i18n.t('games.multiplesCatcher.description'),
+        {
+          fontSize: '17px',
+          fontFamily: 'Patrick Hand, cursive',
+          color: palette.white,
+          wordWrap: { width: TEXT_W },
+          align: 'center',
+        }
+      ).setOrigin(0.5, 0)
+
+      const BUBBLE_H = msgText.height + BUBBLE_PAD * 2
+
+      // Vertical layout (relative to container centre = owl centre):
+      //   ┌─────────────────┐  ← bubbleTopY
+      //   │  description    │
+      //   └────────┬────────┘  ← bubbleBottomY
+      //            ▼ tail tip  ← -(OWL_HALF + GAP)
+      //            🦉          ← 0 (container centre)
+      const OWL_HALF      = 26
+      const TAIL_H        = 14
+      const GAP           = 6
+      const bubbleBottomY = -(OWL_HALF + GAP + TAIL_H)
+      const bubbleTopY    = bubbleBottomY - BUBBLE_H
+      const tailTipY      = -(OWL_HALF + GAP)
+
+      msgText.setPosition(0, bubbleTopY + BUBBLE_PAD)
+
+      const gfx = this.add.graphics()
+      gfx.fillStyle(C.tilePurple, 1)
+      gfx.fillRoundedRect(-BUBBLE_W / 2, bubbleTopY, BUBBLE_W, BUBBLE_H, 10)
+      gfx.fillTriangle(-10, bubbleBottomY, 10, bubbleBottomY, 0, tailTipY)
+      gfx.lineStyle(2, C.tileIndigo, 1)
+      gfx.strokeRoundedRect(-BUBBLE_W / 2, bubbleTopY, BUBBLE_W, BUBBLE_H, 10)
+
+      // ── owl emoji ──────────────────────────────────────────────────────────
+      const owlText = this.add.text(0, 0, '🦉', { fontSize: '52px' }).setOrigin(0.5)
+
+      // Graphics behind text, owl on top
+      this._demoOwl.add([gfx, msgText, owlText])
+
+      // ── drift tween on the container ───────────────────────────────────────
+      // Each step picks a new random x within ±W/6 of centre at ~40 px/s.
       const driftOwl = () => {
-        const targetX = W / 2 + (Math.random() - 0.5) * (W / 3)
-        const dist    = Math.abs(targetX - this._demoOwl.x)
+        const targetX  = W / 2 + (Math.random() - 0.5) * (W / 3)
+        const dist     = Math.abs(targetX - this._demoOwl.x)
         const duration = Math.max(800, (dist / 40) * 1000)  // min 0.8 s per step
-
         this.tweens.add({
           targets: this._demoOwl,
           x: targetX,
@@ -183,15 +214,12 @@ export default class GameScene extends Phaser.Scene {
     // For smooth hold-to-move
     this.lastMoveTime = 0
 
-    // ── expose control methods to React (touch buttons) ──
     this.game.events.emit('sceneReady', this)
 
     if (this.isDemo) {
-      // Demo mode: hide the timer / clock icon (the canvas DEMO label serves
-      // as the only indicator), then hand off to the demo script.
       this.timerText.setText('')
       this.clockIcon.setVisible(false)
-      this._startDemo()
+      this.spawnBall()
     } else {
       // Real game: start the countdown and spawn the first ball.
       this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
@@ -303,15 +331,10 @@ export default class GameScene extends Phaser.Scene {
     return value
   }
 
-  // ── called from React touch buttons ──────────────────────────────────────
+  // ── movement ──────────────────────────────────────────────────────────────
   moveBall(dir) {
     if (!this.ball || this.isGameOver) return
     this.ballColumn = Phaser.Math.Clamp(this.ballColumn + dir, 0, this.numSlots - 1)
-  }
-
-  dropBall() {
-    if (!this.ball || this.isGameOver) return
-    this.isFast = true
   }
 
   // ── landing ───────────────────────────────────────────────────────────────
@@ -358,11 +381,13 @@ export default class GameScene extends Phaser.Scene {
       onComplete: () => g.destroy(),
     })
 
-    // ✓ tick + equation label — clamp x so the text stays within the canvas
-    // even when the ball landed in the leftmost or rightmost slot.
-    const labelX = Phaser.Math.Clamp(x, 100, GAME_W - 100)
+    // ✓ tick + equation label — shift one slot inward on edge slots so the label stays visible
+    const slotW = GAME_W / this.numSlots
+    const labelX = this.ballColumn === 0                    ? x + slotW
+                 : this.ballColumn === this.numSlots - 1   ? x - slotW
+                 : x
     const label = this.add.text(labelX, y - 65, i18n.t('multiplesCatcher.feedback.correct', { ballVal, slotVal, result: ballVal / slotVal }), {
-      fontSize: this.feedbackUI.fontSize,
+      fontSize: FEEDBACK_UI.fontSize,
       fontFamily: 'Arial Black, Arial',
       color: palette.correctGreen,
     }).setOrigin(0.5)
@@ -370,7 +395,7 @@ export default class GameScene extends Phaser.Scene {
       targets: label,
       y: label.y - 40,
       alpha: 0,
-      duration: this.feedbackUI.correctDuration,
+      duration: FEEDBACK_UI.correctDuration,
       ease: 'Quad.easeOut',
       onComplete: () => label.destroy(),
     })
@@ -406,10 +431,13 @@ export default class GameScene extends Phaser.Scene {
       onComplete: () => g.destroy(),
     })
 
-    // ✗ label — same clamping as showCorrect to prevent overflow on border slots
-    const labelX = Phaser.Math.Clamp(x, 100, GAME_W - 100)
+    // ✗ label — shift one slot inward on edge slots so the label stays visible
+    const slotW = GAME_W / this.numSlots
+    const labelX = this.ballColumn === 0                    ? x + slotW
+                 : this.ballColumn === this.numSlots - 1   ? x - slotW
+                 : x
     const label = this.add.text(labelX, y - 65, i18n.t('multiplesCatcher.feedback.wrong', { ballVal, slotVal }), {
-      fontSize: this.feedbackUI.fontSize,
+      fontSize: FEEDBACK_UI.fontSize,
       fontFamily: 'Arial Black, Arial',
       color: palette.wrongRed,
     }).setOrigin(0.5)
@@ -417,7 +445,7 @@ export default class GameScene extends Phaser.Scene {
       targets: label,
       y: label.y - 40,
       alpha: 0,
-      duration: this.feedbackUI.wrongDuration,
+      duration: FEEDBACK_UI.wrongDuration,
       ease: 'Quad.easeOut',
       onComplete: () => label.destroy(),
     })
@@ -428,8 +456,7 @@ export default class GameScene extends Phaser.Scene {
 
   // ── game over ─────────────────────────────────────────────────────────────
   endGame() {
-    // Demo mode never creates a timer event, so endGame() should never be
-    // called — but guard here as a safety net.
+    // Demo mode has no timer, so endGame() is never called — guard as safety net.
     if (this.isGameOver || this.isDemo) return
     this.isGameOver = true
 
@@ -457,15 +484,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // ── Demo mode ──────────────────────────────────────────────────────────────
-  //
-  // Entry point: called once from create() when isDemo === true.
-  // Spawns the first ball and lets spawnBall() drive the loop from that point
-  // forward (spawnBall hooks back into _demoMove() after every ball appears).
-  _startDemo() {
-    this.spawnBall()
-  }
-
-  // Called automatically after each ball spawns in demo mode.
+  // Called after each ball spawns in demo mode.
   // Steers the ball to the correct slot and drops it; the natural ball-landing
   // cycle then calls spawnBall() again, keeping the loop going indefinitely.
   _demoMove() {
@@ -486,29 +505,6 @@ export default class GameScene extends Phaser.Scene {
       this.isFast = true
       return
     }
-
-    // ── Annotation hook ───────────────────────────────────────────────────────
-    // Add game-specific demo visualisations here once the infrastructure is
-    // ready.  Suggested additions (all local to this file — no shared helpers):
-    //
-    //   • Arrow from ball to correct slot:
-    //       const W = GAME_W
-    //       const slotW = W / this.numSlots
-    //       const slotCx = targetSlot * slotW + slotW / 2
-    //       const slotCy = GAME_H - SLOT_H / 2
-    //       // draw a Phaser Graphics arrow, tween it in, store on this._demoArrow
-    //       // destroy this._demoArrow at the top of the next _demoMove() call
-    //
-    //   • Floating equation label above the ball:
-    //       const eq = `${this.ball.value} = ${this.slotValues[targetSlot]} × ${this.ball.value / this.slotValues[targetSlot]}`
-    //       // add text at (ballCx, this.ballY - 50), tween alpha 0→1→0
-    //
-    //   • Pulsing highlight ring on the correct slot:
-    //       // draw a circle at (slotCx, slotCy), scale/alpha tween loop
-    //
-    // Store every annotation object on `this` (e.g. this._demoArrow) so the
-    // next call to _demoMove() can destroy old annotations before drawing new ones.
-    // ─────────────────────────────────────────────────────────────────────────
 
     // Steer the ball one column at a time toward the target slot.
     const stepsNeeded  = targetSlot - this.ballColumn

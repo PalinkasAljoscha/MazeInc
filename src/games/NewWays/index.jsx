@@ -276,25 +276,57 @@ export default function NewWays({ level = 2, onComplete }) {
           )
         })}
 
-        {/* ── Start marker (green dot, always visible) ── */}
-        <circle
-          cx={toSvg(0, 0, size)[0]}
-          cy={toSvg(0, 0, size)[1]}
-          r={0.22}
-          fill={palette.correctGreen}
-          opacity={0.85}
-          style={{ pointerEvents: 'none' }}
-        />
+        {/* ── Start marker: green flag (bottom-left cell) ── */}
+        {(() => {
+          const sq = 0.095
+          const fCols = 4, fRows = 3
+          const flagW = fCols * sq, flagH = fRows * sq
+          // Start cell in SVG: x∈[0,1], y∈[size-1, size]
+          const poleX = 0.20, poleBaseY = size - 0.08, flagTop = size - 1 + 0.05
+          const poleColor = palette.flagPoleColor
+          return (
+            <g style={{ pointerEvents: 'none' }}
+              transform={`rotate(-20, ${poleX}, ${poleBaseY})`}>
+              <line x1={poleX} y1={flagTop} x2={poleX} y2={poleBaseY}
+                stroke={poleColor} strokeWidth={0.05} strokeLinecap="round" />
+              <rect x={poleX - flagW} y={flagTop} width={flagW} height={flagH}
+                fill={palette.correctGreen} opacity={0.92} />
+            </g>
+          )
+        })()}
 
-        {/* ── Target star ── */}
-        <text
-          x={toSvg(target[0], target[1], size)[0]}
-          y={toSvg(target[0], target[1], size)[1]}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={0.65}
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
-        >★</text>
+        {/* ── Target: checkered flag (top-right cell) ── */}
+        {(() => {
+          const sq = 0.095
+          const fCols = 4, fRows = 3
+          const flagW = fCols * sq, flagH = fRows * sq
+          // Target cell in SVG: x∈[size-1, size], y∈[0, 1]
+          const poleX = size - 0.20, poleBaseY = 0.92, flagTop = 0.05
+          const poleColor = palette.flagPoleColor
+          const checks = []
+          for (let r = 0; r < fRows; r++) {
+            for (let c = 0; c < fCols; c++) {
+              if ((r + c) % 2 === 0) {
+                checks.push(
+                  <rect key={`chk-${r}-${c}`}
+                    x={poleX + c * sq} y={flagTop + r * sq}
+                    width={sq} height={sq} fill="#222" opacity={0.9}
+                  />
+                )
+              }
+            }
+          }
+          return (
+            <g style={{ pointerEvents: 'none' }}
+              transform={`rotate(20, ${poleX}, ${poleBaseY})`}>
+              <line x1={poleX} y1={flagTop} x2={poleX} y2={poleBaseY}
+                stroke={poleColor} strokeWidth={0.05} strokeLinecap="round" />
+              <rect x={poleX} y={flagTop} width={flagW} height={flagH}
+                fill="#eeeeee" opacity={0.92} />
+              {checks}
+            </g>
+          )
+        })()}
 
         {/* ── Path lines, arrowheads, dots ── */}
         <PathLayer
@@ -308,15 +340,12 @@ export default function NewWays({ level = 2, onComplete }) {
         {!won && (() => {
           const [cx, cy] = toSvg(pos[0], pos[1], size)
           return (
-            <g style={{ pointerEvents: 'none' }}>
-              <circle cx={cx} cy={cy} r={0.36} fill={palette.objBasicBlue} stroke={palette.white} strokeWidth={0.05} />
-              <text
-                x={cx} y={cy}
-                textAnchor="middle" dominantBaseline="central"
-                fontSize={0.38}
-                style={{ userSelect: 'none' }}
-              >♟</text>
-            </g>
+            <text
+              x={cx} y={cy}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={0.38}
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >🪰</text>
           )
         })()}
 

@@ -83,6 +83,7 @@ export default class GameScene extends Phaser.Scene {
     this.W = W; this.H = H
 
     const level        = this.registry.get('level') ?? 1
+    this.isDemo        = this.registry.get('demo')  ?? false
     this.level         = level
     this.maxPrice      = MAX_PRICE[level] ?? 5
     this.maxTableTotal = MAX_TABLE_TOTAL[level] ?? 10
@@ -92,6 +93,7 @@ export default class GameScene extends Phaser.Scene {
     this.isTransitioning  = false
     this.timesUp          = false
     this.foodEmojiObjects = []
+    this.foodItemOrder    = []   // parallel to foodEmojiObjects: item with .price
     this.selectedNum      = null
     this.coinObjects      = []
     this.timesUpBanner    = null
@@ -115,7 +117,12 @@ export default class GameScene extends Phaser.Scene {
 
     this._startRound()
 
-    this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
+    if (this.isDemo) {
+      this.timerText.setText('')
+      this._demoAnnotate()
+    } else {
+      this.timerEvent = createCountdownTimer(this, GAME_DURATION, this.timerText)
+    }
 
     this.game.events.emit('sceneReady', this)
   }
@@ -270,11 +277,11 @@ export default class GameScene extends Phaser.Scene {
     const cx = W / 2
     const cy = TABLE_IMG_CY
 
-    if (isCorrect) {
-      this.score += 10
-      this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
-    } else {
-      if (this.score > 3) {
+    if (!this.isDemo) {
+      if (isCorrect) {
+        this.score += 10
+        this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
+      } else if (this.score > 3) {
         this.score -= 3
         this.scoreText.setText(i18n.t('atRestaurant.hud.score', { score: this.score }))
       }
@@ -340,6 +347,7 @@ export default class GameScene extends Phaser.Scene {
   _renderTable(container) {
     container.removeAll(true)
     this.foodEmojiObjects = []
+    this.foodItemOrder    = []
 
     const items = this.currentOrder
     const count = items.length
@@ -375,6 +383,9 @@ export default class GameScene extends Phaser.Scene {
 
     placeRow(bottomRow, bottomY)
     if (topRow.length) placeRow(topRow, bottomY - rowSpacing)
+
+    // Parallel item array in same order as foodEmojiObjects (bottom row first, then top row)
+    this.foodItemOrder = [...bottomRow, ...topRow]
   }
 
   _nextRound() {
@@ -426,6 +437,7 @@ export default class GameScene extends Phaser.Scene {
 
       this.time.delayedCall(incoming.length * 300, () => {
         this.isTransitioning = false
+        if (this.isDemo) this._demoAnnotate()
       })
     })
   }
@@ -435,7 +447,7 @@ export default class GameScene extends Phaser.Scene {
   // Called by the countdown timer when it hits zero.
   // Instead of ending immediately, we wait for the current answer.
   endGame() {
-    if (this.isGameOver || this.timesUp) return
+    if (this.isGameOver || this.timesUp || this.isDemo) return
     if (this.timerEvent) this.timerEvent.remove()
     this.timesUp = true
 
@@ -447,6 +459,80 @@ export default class GameScene extends Phaser.Scene {
 
     // If mid-feedback animation, _showFeedback will call _doGameOver when done
     // If waiting for input, player must click a coin to end the game
+  }
+
+  // ── demo annotation ───────────────────────────────────────────────────────
+
+  // Runs one demo cycle: price labels → sum formula → coin selection → feedback.
+  // Called from create() for the first round and from _nextRound() for all subsequent ones.
+  _demoAnnotate() {
+    if (this.isGameOver) return
+
+    const foods  = this.foodEmojiObjects
+    const items  = this.foodItemOrder
+    const labels = []
+    const PRICE_INTERVAL = 750   // ms between each price label appearing
+
+    // Step 1 — price labels appear one by one above each food emoji
+    foods.forEach((em, i) => {
+      this.time.delayedCall(i * PRICE_INTERVAL, () => {
+        if (this.isGameOver || !em.active) return
+        const label = this.add.text(em.x, em.y - 44, String(items[i].price), {
+          fontSize: '26px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
+        }).setOrigin(0.5).setDepth(15).setAlpha(0)
+
+        labels.push(label)
+        this.tweens.add({ targets: label, alpha: 1, y: em.y - 50, duration: 300, ease: 'Back.easeOut' })
+      })
+    })
+
+    // Step 2 — sum formula appears after all price labels are visible
+    const formulaDelay = foods.length * PRICE_INTERVAL + 400
+    this.time.delayedCall(formulaDelay, () => {
+      if (this.isGameOver) return
+
+      const formula = items.map(f => f.price).join(' + ') + ' = ' + this.correctTotal
+      const cx = this.W / 2
+
+      // Semi-transparent pill behind the formula for readability
+      const bg = this.add.graphics().setDepth(14)
+      const formulaText = this.add.text(cx, TABLE_IMG_CY, formula, {
+        fontSize: '30px', fontFamily: 'Arial Black, Arial', color: palette.scoreYellow,
+      }).setOrigin(0.5).setDepth(15).setAlpha(0)
+
+      // Draw pill once text dimensions are known
+      const pad = 16
+      bg.fillStyle(0x000000, 0.55)
+      bg.fillRoundedRect(
+        cx - formulaText.width / 2 - pad,
+        TABLE_IMG_CY - formulaText.height / 2 - pad / 2,
+        formulaText.width + pad * 2,
+        formulaText.height + pad,
+        10,
+      )
+
+      this.tweens.add({ targets: formulaText, alpha: 1, duration: 300, ease: 'Quad.easeOut' })
+
+      // Step 3 — select the correct coin after formula has been visible for 1.6 s
+      this.time.delayedCall(1600, () => {
+        if (this.isGameOver) return
+
+        // Clean up annotation layer
+        labels.forEach(l => { if (l.active) l.destroy() })
+        bg.destroy()
+        formulaText.destroy()
+
+        // Highlight the correct coin
+        this.selectedNum = this.correctTotal
+        this._renderCoins()
+
+        // Step 4 — submit after a short pause so the selection is visible
+        this.time.delayedCall(500, () => {
+          if (this.isGameOver) return
+          this._submitAnswer()
+        })
+      })
+    })
   }
 
   // Shows the game-over panel and emits the completion event.

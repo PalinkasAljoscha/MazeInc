@@ -2,9 +2,9 @@ import { useRef } from 'react'
 import GameScene from './GameScene'
 import { usePhaserGame } from '../../hooks/usePhaserGame.js'
 
-export default function AtTheRestaurant({ level = 1, onComplete }) {
+export default function AtTheRestaurant({ level = 1, speed = 4, demo = false, onComplete }) {
   const containerRef = useRef(null)
-  usePhaserGame(containerRef, GameScene, { level, speed: 4, onComplete })
+  usePhaserGame(containerRef, GameScene, { level, speed, demo, onComplete })
 
   return (
     <div className="w-full h-full flex flex-col items-center bg-gray-950">

@@ -229,7 +229,7 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
   // ── Render data ───────────────────────────────────────────────────────────
   const displayHistory = (flash && flash.proposedPos) ? [...history, flash.proposedPos] : history
 
-  const pad = 0.4
+  const pad = 0.5
   const vbW = BOARD_WIDTH + 2 * pad
   const vbH = VISIBLE_ROWS + 2 * pad
 
@@ -351,18 +351,24 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
               />
             </g>{/* end clip */}
 
-            {/* ── Start marker at (0, 0) ── */}
+            {/* ── Start marker: green flag at (0, 0) ── */}
             {(() => {
               const [sx, sy] = toSvg(0, 0, viewOffset)
               if (sy < -1 || sy > VISIBLE_ROWS + 1) return null
+              const sq = 0.095
+              const fCols = 4, fRows = 3
+              const flagW = fCols * sq, flagH = fRows * sq
+              const poleX     = sx - 0.30   // 0.20 from left edge of cell
+              const poleBaseY = sy + 0.42   // 0.92 from top edge of cell
+              const flagTop   = sy - 0.45   // 0.05 from top edge of cell
               return (
-                <circle
-                  cx={sx} cy={sy}
-                  r={0.22}
-                  fill={palette.correctGreen}
-                  opacity={0.85}
-                  style={{ pointerEvents: 'none' }}
-                />
+                <g style={{ pointerEvents: 'none' }}
+                  transform={`rotate(-20, ${poleX}, ${poleBaseY})`}>
+                  <line x1={poleX} y1={flagTop} x2={poleX} y2={poleBaseY}
+                    stroke={palette.flagPoleColor} strokeWidth={0.05} strokeLinecap="round" />
+                  <rect x={poleX - flagW} y={flagTop} width={flagW} height={flagH}
+                    fill={palette.correctGreen} opacity={0.92} />
+                </g>
               )
             })()}
 
@@ -371,12 +377,11 @@ export default function LadderToInfinity({ level = 4, onComplete }) {
               const [cx, cy] = toSvg(pos[0], pos[1], viewOffset)
               return (
                 <text
-                  x={cx + 0.30} y={cy - 0.10}
-                  textAnchor="middle" dominantBaseline="auto"
-                  fontSize={0.54}
-                  transform={`rotate(-45, ${cx}, ${cy})`}
+                  x={cx} y={cy}
+                  textAnchor="middle" dominantBaseline="central"
+                  fontSize={0.38}
                   style={{ userSelect: 'none', pointerEvents: 'none' }}
-                >🚀</text>
+                >🪰</text>
               )
             })()}
           </svg>
