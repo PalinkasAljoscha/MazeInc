@@ -395,6 +395,18 @@ export default class GameScene extends Phaser.Scene {
   _nextRound() {
     if (this.isGameOver) return
 
+    // Demo: owl returns to MENU as soon as food removal starts
+    if (this.isDemo && this._demoOwl) {
+      const mt = this.menuTitleText
+      this.tweens.killTweensOf(this._demoOwl)
+      this.tweens.add({
+        targets: this._demoOwl,
+        x: mt.x - mt.width / 2 - 32,
+        y: mt.y + mt.height / 2,
+        duration: 500, ease: 'Sine.easeInOut',
+      })
+    }
+
     // Detach current food emojis from container so _renderTable won't destroy them mid-flight
     const outgoing = [...this.foodEmojiObjects]
     outgoing.forEach(em => this.tableContainer.remove(em, false))
@@ -478,22 +490,15 @@ export default class GameScene extends Phaser.Scene {
     const labels = []
     const owl    = this._demoOwl
 
-    const OWL_TO_MENU    = 500   // ms to tween owl back to MENU
     const MENU_WAIT      = 1000  // ms owl sits at MENU before visiting foods
     const PRICE_INTERVAL = 800   // ms between each price label
     const OWL_Y_OFFSET   = 90    // px above food emoji the owl hovers
 
-    // Return owl to MENU (on the first call it starts there, so this is a no-op visually)
-    const mt       = this.menuTitleText
-    const owlMenuX = mt.x - mt.width / 2 - 32
-    const owlMenuY = mt.y + mt.height / 2
-    this.tweens.add({
-      targets: owl, x: owlMenuX, y: owlMenuY,
-      duration: OWL_TO_MENU, ease: 'Sine.easeInOut',
-    })
+    // Owl is already at MENU (moved there by _nextRound on first food removal,
+    // or starts there on the very first call from create()).
 
-    // Step 1 — after reaching MENU and sitting for MENU_WAIT, owl visits each food
-    const foodStart = OWL_TO_MENU + MENU_WAIT
+    // Step 1 — after sitting at MENU for MENU_WAIT, owl visits each food
+    const foodStart = MENU_WAIT
     foods.forEach((em, i) => {
       this.time.delayedCall(foodStart + i * PRICE_INTERVAL, () => {
         if (this.isGameOver || !em.active) return
