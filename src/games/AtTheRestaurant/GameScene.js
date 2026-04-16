@@ -260,12 +260,9 @@ export default class GameScene extends Phaser.Scene {
 
   _onCoinClick(num) {
     if (this.isGameOver || this.isTransitioning) return
-    if (this.selectedNum === num) {
-      this._submitAnswer()
-    } else {
-      this.selectedNum = num
-      this._renderCoins()
-    }
+    this.selectedNum = num
+    this._renderCoins()
+    this._submitAnswer()
   }
 
   // ── answer submission ──────────────────────────────────────────────────────

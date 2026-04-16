@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { palette } from './theme.js'
 import MultiplesCatcher, { meta as multiplesCatcherMeta } from './games/MultiplesCatcher'
@@ -306,7 +306,15 @@ export default function App() {
   const [activeLevel, setActiveLevel] = useState(null)
   const [activeSpeed, setActiveSpeed] = useState(4)
   const [isDemoMode, setIsDemoMode]   = useState(false)
+  const [btnBlink, setBtnBlink]       = useState(false)
   const [gameKey, setGameKey]         = useState(0)
+
+  // Blink the "Start New" button in demo mode (0.7 s interval).
+  useEffect(() => {
+    if (!isDemoMode) { setBtnBlink(false); return }
+    const id = setInterval(() => setBtnBlink(b => !b), 700)
+    return () => clearInterval(id)
+  }, [isDemoMode])
 
   // Settings modal: null | { gameConfig, pendingLevel, pendingSpeed }
   const [settingsModal, setSettingsModal] = useState(null)
@@ -409,7 +417,10 @@ export default function App() {
                 : startGame(game, activeLevel, activeSpeed)
               }
               className="text-white font-black text-xl rounded-2xl px-6 py-2 active:scale-95 transition-transform duration-100"
-              style={{ backgroundColor: palette.btnBlue }}
+              style={{
+                backgroundColor: palette.btnBlue,
+                outline: isDemoMode && btnBlink ? '3px solid white' : '3px solid transparent',
+              }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = palette.btnBlueHover}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = palette.btnBlue}
             >
